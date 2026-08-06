@@ -9,7 +9,7 @@ export interface AuthUser {
   permissions: string[];
 }
 
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK === 'true' || true;
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK === 'true';
 
 export const authAPI = {
   login: (email: string, password: string) => {

@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as mockData from './mockData';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5010';
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK === 'true' || true; // Default to mock
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK === 'true'; // Only true if explicitly set
 
 export const api = axios.create({
   baseURL: API_BASE,
