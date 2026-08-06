@@ -22,7 +22,7 @@ export const authAPI = {
         },
       });
     }
-    return api.post('/auth/login', { email, password });
+    return api.post('/api/auth/login', { email, password });
   },
 
   logout: () => {
