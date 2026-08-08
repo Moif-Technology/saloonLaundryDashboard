@@ -1,0 +1,110 @@
+/* ============================================================
+   CUSTOMER LEDGER — stacked records on phone, columns on desktop.
+   ============================================================ */
+
+.section .segmented {
+  margin-bottom: var(--s-5);
+}
+
+/* ---------- Balances ---------- */
+
+.ledger-grid {
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: var(--s-1);
+}
+
+.ledger-grid .dl-primary {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.ledger-grid .dl-num {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.ledger-grid .ledger-debit {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.ledger-grid .ledger-when {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
+@media (min-width: 900px) {
+  .ledger-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.3fr) 150px 170px;
+    row-gap: 0;
+  }
+  .ledger-grid .dl-primary {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .ledger-grid .ledger-debit {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .ledger-grid .ledger-when {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .ledger-grid .dl-num {
+    grid-column: 4;
+    grid-row: 1;
+  }
+}
+
+/* ---------- Unpaid bills ---------- */
+
+.unpaid-grid {
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: var(--s-2);
+}
+
+.unpaid-grid .dl-primary {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.unpaid-grid .dl-num {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.unpaid-grid .dl-meta {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.unpaid-grid .unpaid-age {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+}
+
+@media (min-width: 900px) {
+  .unpaid-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 160px 170px;
+    row-gap: 0;
+    align-items: center;
+  }
+  .unpaid-grid .dl-primary {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .unpaid-grid .dl-meta {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .unpaid-grid .unpaid-age {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: start;
+  }
+  .unpaid-grid .dl-num {
+    grid-column: 4;
+    grid-row: 1;
+  }
+}

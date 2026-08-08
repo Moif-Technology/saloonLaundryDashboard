@@ -1,0 +1,90 @@
+/* ============================================================
+   DAILY SALES — proportional bars carry the comparison,
+   so the numbers stay quiet.
+   ============================================================ */
+
+.product-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: var(--s-2);
+}
+
+.product-row .dl-primary {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.product-row .dl-num {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.product-row .dl-meta {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  order: 3;
+}
+
+.product-meter {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: block;
+}
+
+@media (min-width: 900px) {
+  .product-row {
+    grid-template-columns: minmax(0, 1.1fr) minmax(120px, 0.9fr) 90px 150px;
+    row-gap: 0;
+  }
+  .product-row .dl-meta {
+    grid-column: 3;
+    grid-row: 1;
+    order: 0;
+    justify-content: flex-end;
+  }
+  .product-row .product-meter {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .product-row .dl-num {
+    grid-column: 4;
+    grid-row: 1;
+  }
+}
+
+/* ---------- Tender split ---------- */
+
+.tender {
+  display: grid;
+  gap: var(--s-5);
+  padding-top: var(--s-2);
+}
+
+.tender-row {
+  display: grid;
+  gap: var(--s-2);
+  animation: row-in var(--dur-2) var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.tender-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.tender-name {
+  font-size: var(--t-md);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: capitalize;
+}
+
+.tender-share {
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.tender .meter {
+  height: 6px;
+}

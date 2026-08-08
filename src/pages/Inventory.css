@@ -1,0 +1,131 @@
+/* ============================================================
+   INVENTORY — level bars read faster than a numbers column.
+   ============================================================ */
+
+.section .segmented {
+  margin-bottom: var(--s-5);
+}
+
+.stock {
+  display: grid;
+}
+
+.stock-row {
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-4) 0;
+  border-bottom: 1px solid var(--line);
+  animation: row-in var(--dur-2) var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 35ms);
+}
+
+.stock-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.stock-name {
+  font-size: var(--t-md);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-level {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  flex: none;
+}
+
+.stock-level em {
+  font-style: normal;
+  margin-left: 4px;
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+  letter-spacing: 0;
+}
+
+.stock-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.stock-meta .sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  flex: none;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.status-ok {
+  color: var(--pos);
+}
+.status-low {
+  color: var(--gold-ink);
+}
+.status-critical {
+  color: var(--neg);
+}
+
+/* Critical rows earn a marker in the gutter, not a coloured box. */
+.stock-row:has(.status-critical) {
+  position: relative;
+  padding-left: var(--s-3);
+}
+
+.stock-row:has(.status-critical)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: var(--s-4);
+  bottom: var(--s-4);
+  width: 2px;
+  border-radius: var(--r-pill);
+  background: var(--neg);
+}
+
+@media (min-width: 900px) {
+  .stock-row {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    grid-template-areas:
+      'head meter'
+      'meta meter';
+    align-items: center;
+    column-gap: var(--s-7);
+    padding: var(--s-5) 0;
+  }
+
+  .stock-head {
+    grid-area: head;
+  }
+  .stock-meta {
+    grid-area: meta;
+  }
+  .stock-row > .meter {
+    grid-area: meter;
+    height: 6px;
+  }
+}

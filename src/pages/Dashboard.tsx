@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { counterCloseAPI, dailySalesAPI } from '../lib/api';
+import { formatMoney } from '../lib/format';
+import {
+  IconAlert,
+  IconArrow,
+  IconLedger,
+  IconRefresh,
+  IconStaff,
+  IconStock,
+  IconVault,
+} from '../components/Icon';
+import './Dashboard.css';
 
 interface DashboardStats {
   todayRevenue: number;
@@ -7,6 +19,19 @@ interface DashboardStats {
   pendingBills: number;
   averageTransaction: number;
 }
+
+/* Display-only: lifts the currency code out so the figure can carry the weight. */
+const splitMoney = (value: number) => {
+  const parts = formatMoney(value).split(' ');
+  return { code: parts[0], figure: parts.slice(1).join(' ') };
+};
+
+const SHORTCUTS = [
+  { to: '/counter-closes', label: 'Counter closes', note: 'Saved Z reports, day by day', icon: IconVault },
+  { to: '/inventory', label: 'Check stock', note: 'Reorder levels and warnings', icon: IconStock },
+  { to: '/staff-performance', label: 'Staff numbers', note: 'Revenue and tickets per person', icon: IconStaff },
+  { to: '/customer-ledger', label: 'Credit exposure', note: 'Outstanding customer balances', icon: IconLedger },
+];
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -53,48 +78,124 @@ export default function Dashboard() {
     }
   };
 
-  if (isLoading) return <div className="loading-spinner"></div>;
+  if (isLoading) {
+    return (
+      <div className="page">
+        <div className="sk-stack" style={{ maxWidth: 320 }}>
+          <div className="sk sk-line is-sm" style={{ width: '38%' }} />
+          <div className="sk sk-line is-lg" style={{ height: 52, width: '80%' }} />
+          <div className="sk sk-line is-sm" style={{ width: '52%' }} />
+        </div>
+        <div className="stat-rail" style={{ marginTop: 32 }}>
+          {[0, 1, 2].map((key) => (
+            <div className="stat" key={key}>
+              <div className="sk sk-line is-sm" style={{ width: '64%' }} />
+              <div className="sk sk-line" style={{ marginTop: 12, width: '78%', height: 20 }} />
+            </div>
+          ))}
+        </div>
+        <div className="sk-rows">
+          {[0, 1, 2, 3].map((key) => (
+            <div className="sk-row" key={key}>
+              <div className="sk sk-line" style={{ width: '58%' }} />
+              <div className="sk sk-line is-sm" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const revenue = splitMoney(stats.todayRevenue);
 
   return (
-    <div className="container">
-      <div className="page-header">
-        <h1>Dashboard Overview</h1>
-        <p>Real-time business metrics and summary</p>
-      </div>
-
-      {error && <div className="error">{error}</div>}
-
-      <div className="grid">
-        <div className="card">
-          <div className="card-title">Today Revenue</div>
-          <div className="card-value">₹{stats.todayRevenue.toLocaleString()}</div>
-          <div className="card-subtitle">Total sales today</div>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <p className="page-eyebrow">Today</p>
+          <h1 className="page-title">Counter overview</h1>
         </div>
-
-        <div className="card">
-          <div className="card-title">Total Transactions</div>
-          <div className="card-value">{stats.totalTransactions}</div>
-          <div className="card-subtitle">Today</div>
-        </div>
-
-        <div className="card">
-          <div className="card-title">Avg Transaction</div>
-          <div className="card-value">₹{stats.averageTransaction.toFixed(0)}</div>
-          <div className="card-subtitle">Average per sale</div>
-        </div>
-
-        <div className="card">
-          <div className="card-title">Pending Bills</div>
-          <div className="card-value">{stats.pendingBills}</div>
-          <div className="card-subtitle">Credit sales</div>
-        </div>
-      </div>
-
-      <div style={{ marginTop: '30px' }}>
-        <button className="btn btn-primary" onClick={fetchDashboardData}>
-          Refresh Data
+        <button
+          type="button"
+          className="btn btn-quiet btn-icon"
+          onClick={fetchDashboardData}
+          aria-label="Refresh counter data"
+        >
+          <IconRefresh />
         </button>
       </div>
+
+      {error && (
+        <div className="notice is-error" role="alert" style={{ marginBottom: 24 }}>
+          <IconAlert />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Headline figure carries the page — deliberately unboxed. */}
+      <section className="headline">
+        <p className="headline-label">
+          <span className="dot is-live" style={{ color: 'var(--accent)' }} />
+          Revenue booked today
+        </p>
+        <p className="headline-figure">
+          <span className="headline-code">{revenue.code}</span>
+          {revenue.figure}
+        </p>
+        <p className="headline-note">
+          Across {stats.totalTransactions} {stats.totalTransactions === 1 ? 'ticket' : 'tickets'}
+          {stats.pendingBills > 0 ? ` · ${stats.pendingBills} on credit` : ' · nothing on credit'}
+        </p>
+      </section>
+
+      <section className="stat-rail" aria-label="Today at a glance">
+        <div className="stat" style={{ '--i': 0 } as React.CSSProperties}>
+          <p className="stat-label">Tickets</p>
+          <p className="stat-value">{stats.totalTransactions}</p>
+          <p className="stat-foot">Closed sales</p>
+        </div>
+        <div className="stat" style={{ '--i': 1 } as React.CSSProperties}>
+          <p className="stat-label">Average sale</p>
+          <p className="stat-value">{formatMoney(stats.averageTransaction)}</p>
+          <p className="stat-foot">Per ticket</p>
+        </div>
+        <div
+          className={`stat${stats.pendingBills > 0 ? ' is-warn' : ''}`}
+          style={{ '--i': 2 } as React.CSSProperties}
+        >
+          <p className="stat-label">Pending bills</p>
+          <p className="stat-value">{stats.pendingBills}</p>
+          <p className="stat-foot">Credit sales open</p>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="section-head">
+          <h2 className="section-title">Next actions</h2>
+        </div>
+        <div className="shortcuts">
+          {SHORTCUTS.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="shortcut"
+                style={{ '--i': index } as React.CSSProperties}
+              >
+                <span className="shortcut-icon">
+                  <Icon size={19} />
+                </span>
+                <span className="shortcut-text">
+                  <strong>{item.label}</strong>
+                  <em>{item.note}</em>
+                </span>
+                <IconArrow />
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { staffAPI } from '../lib/api';
+import { formatMoney } from '../lib/format';
+import { IconAlert, IconInbox, IconRefresh, IconStar } from '../components/Icon';
+import './StaffPerformance.css';
 
 interface StaffData {
   staffId: string;
@@ -18,9 +21,10 @@ export default function StaffPerformance() {
   const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
 
+  /* Live: any change to the range refetches, no Load button to press. */
   useEffect(() => {
     fetchStaffData();
-  }, []);
+  }, [dateFrom, dateTo]);
 
   const fetchStaffData = async () => {
     try {
@@ -36,70 +40,138 @@ export default function StaffPerformance() {
     }
   };
 
-  if (isLoading) return <div className="loading-spinner"></div>;
+  /* Display-only: bar length is relative to the strongest performer. */
+  const top = Math.max(1, ...staff.map((member) => member.totalRevenue || 0));
 
   return (
-    <div className="container">
-      <div className="page-header">
-        <h1>Staff Performance</h1>
-        <p>Sales and transaction metrics by staff member</p>
-      </div>
-
-      {error && <div className="error">{error}</div>}
-
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-        />
-        <span>to</span>
-        <input
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-        />
-        <button className="btn btn-primary" onClick={fetchStaffData}>
-          Load
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <p className="page-eyebrow">People</p>
+          <h1 className="page-title">Staff performance</h1>
+          <p className="page-sub">Revenue, ticket count and tips per staff member for the range.</p>
+        </div>
+        <button
+          type="button"
+          className="btn btn-quiet btn-icon"
+          onClick={fetchStaffData}
+          aria-label="Reload this range"
+        >
+          <IconRefresh />
         </button>
       </div>
 
-      <div style={{ background: 'white', padding: '20px', borderRadius: '8px' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #ddd' }}>
-              <th style={{ textAlign: 'left', padding: '12px', fontWeight: '600' }}>Name</th>
-              <th style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>Total Revenue</th>
-              <th style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>Transactions</th>
-              <th style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>Avg Sale</th>
-              <th style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>Tips</th>
-              <th style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>Rating</th>
-            </tr>
-          </thead>
-          <tbody>
-            {staff.map((member) => (
-              <tr key={member.staffId} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '12px' }}>{member.name}</td>
-                <td style={{ textAlign: 'right', padding: '12px' }}>₹{member.totalRevenue.toLocaleString()}</td>
-                <td style={{ textAlign: 'right', padding: '12px' }}>{member.transactionCount}</td>
-                <td style={{ textAlign: 'right', padding: '12px' }}>₹{member.avgTransaction.toFixed(0)}</td>
-                <td style={{ textAlign: 'right', padding: '12px' }}>₹{member.totalTips.toLocaleString()}</td>
-                <td style={{ textAlign: 'right', padding: '12px' }}>
-                  <span style={{
-                    background: member.performanceRating >= 4 ? '#28a745' : '#ffc107',
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                  }}>
-                    {member.performanceRating.toFixed(1)} ⭐
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {error && (
+        <div className="notice is-error" role="alert" style={{ marginBottom: 20 }}>
+          <IconAlert />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div className="range">
+        <div className="field">
+          <label className="field-label" htmlFor="staff-from">
+            From
+          </label>
+          <input
+            id="staff-from"
+            className="input"
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="staff-to">
+            To
+          </label>
+          <input
+            id="staff-to"
+            className="input"
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+          />
+        </div>
       </div>
+
+      <section className="section">
+        <div className="section-head">
+          <h2 className="section-title">Leaderboard</h2>
+          <span className="section-note">
+            {staff.length} {staff.length === 1 ? 'person' : 'people'}
+          </span>
+        </div>
+
+        {isLoading ? (
+          <div className="sk-rows">
+            {[0, 1, 2, 3].map((key) => (
+              <div className="sk-row" key={key}>
+                <div className="sk sk-line" style={{ width: '48%' }} />
+                <div className="sk sk-line is-sm" />
+                <div className="sk sk-line is-sm" style={{ gridColumn: '1 / -1', width: '70%' }} />
+              </div>
+            ))}
+          </div>
+        ) : staff.length === 0 ? (
+          <div className="empty">
+            <span className="empty-mark">
+              <IconInbox />
+            </span>
+            <p className="empty-title">No staff activity in this range</p>
+            <p className="empty-body">
+              Pick a wider date range, or confirm sales were attributed to staff at the till.
+            </p>
+          </div>
+        ) : (
+          <ul className="board">
+            {staff.map((member, index) => (
+              <li
+                className="board-row"
+                key={member.staffId}
+                style={{ '--i': index } as React.CSSProperties}
+              >
+                <span className="board-rank mono">{String(index + 1).padStart(2, '0')}</span>
+
+                <span className="board-body">
+                  <span className="board-head">
+                    <span className="board-name">{member.name}</span>
+                    <span className={`chip ${member.performanceRating >= 4 ? 'is-gold' : ''}`}>
+                      <IconStar />
+                      {member.performanceRating.toFixed(1)}
+                    </span>
+                  </span>
+
+                  <span className="board-figure mono">{formatMoney(member.totalRevenue)}</span>
+
+                  <span className="meter">
+                    <span
+                      className="meter-fill"
+                      style={
+                        {
+                          width: `${Math.max(4, ((member.totalRevenue || 0) / top) * 100)}%`,
+                          '--i': index,
+                        } as React.CSSProperties
+                      }
+                    />
+                  </span>
+
+                  <span className="board-meta">
+                    <span>
+                      {member.transactionCount}{' '}
+                      {member.transactionCount === 1 ? 'ticket' : 'tickets'}
+                    </span>
+                    <span className="sep" />
+                    <span>{formatMoney(member.avgTransaction)} avg</span>
+                    <span className="sep" />
+                    <span>{formatMoney(member.totalTips)} tips</span>
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

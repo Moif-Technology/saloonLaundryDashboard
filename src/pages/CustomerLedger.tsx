@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { customerAPI } from '../lib/api';
+import { formatMoney } from '../lib/format';
+import { IconAlert, IconCheck, IconInbox } from '../components/Icon';
+import './CustomerLedger.css';
 
 interface UnpaidBill {
   billId: string;
@@ -48,142 +51,196 @@ export default function CustomerLedger() {
     }
   };
 
-  if (isLoading) return <div className="loading-spinner"></div>;
+  if (isLoading) {
+    return (
+      <div className="page">
+        <div className="sk-stack" style={{ maxWidth: 300 }}>
+          <div className="sk sk-line is-sm" style={{ width: '34%' }} />
+          <div className="sk sk-line is-lg" style={{ width: '68%' }} />
+        </div>
+        <div className="stat-rail" style={{ marginTop: 28 }}>
+          {[0, 1, 2].map((key) => (
+            <div className="stat" key={key}>
+              <div className="sk sk-line is-sm" style={{ width: '62%' }} />
+              <div className="sk sk-line" style={{ marginTop: 12, width: '76%', height: 20 }} />
+            </div>
+          ))}
+        </div>
+        <div className="sk-rows">
+          {[0, 1, 2, 3, 4].map((key) => (
+            <div className="sk-row" key={key}>
+              <div className="sk sk-line" style={{ width: '50%' }} />
+              <div className="sk sk-line is-sm" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const totalBalance = ledger.reduce((sum, entry) => sum + entry.balance, 0);
   const totalUnpaid = unpaidBills.reduce((sum, bill) => sum + bill.amount, 0);
+  const badlyOverdue = unpaidBills.filter((bill) => bill.daysOverdue > 30).length;
 
   return (
-    <div className="container">
-      <div className="page-header">
-        <h1>Customer Ledger</h1>
-        <p>Credit sales tracking and outstanding balances</p>
-      </div>
-
-      {error && <div className="error">{error}</div>}
-
-      <div className="grid" style={{ marginBottom: '20px' }}>
-        <div className="card">
-          <div className="card-title">Total Balance</div>
-          <div className="card-value">₹{Math.abs(totalBalance).toLocaleString()}</div>
-          <div className="card-subtitle">
-            {totalBalance > 0 ? 'Amount to collect' : 'Amount to refund'}
-          </div>
-        </div>
-        <div className="card">
-          <div className="card-title">Unpaid Bills</div>
-          <div className="card-value">{unpaidBills.length}</div>
-          <div className="card-subtitle">₹{totalUnpaid.toLocaleString()}</div>
-        </div>
-        <div className="card">
-          <div className="card-title">Credit Customers</div>
-          <div className="card-value">{ledger.length}</div>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <p className="page-eyebrow">Receivables</p>
+          <h1 className="page-title">Customer ledger</h1>
+          <p className="page-sub">Credit given, credit collected, and what is still owed.</p>
         </div>
       </div>
 
-      <div style={{ background: 'white', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '10px', borderBottom: '2px solid #eee' }}>
+      {error && (
+        <div className="notice is-error" role="alert" style={{ marginBottom: 20 }}>
+          <IconAlert />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {badlyOverdue > 0 && (
+        <div className="notice is-warn" style={{ marginBottom: 20 }}>
+          <IconAlert />
+          <span>
+            {badlyOverdue} {badlyOverdue === 1 ? 'bill has' : 'bills have'} passed 30 days. Chase
+            before the month closes.
+          </span>
+        </div>
+      )}
+
+      <section className="stat-rail" aria-label="Receivables summary">
+        <div
+          className={`stat ${totalBalance > 0 ? 'is-pos' : totalBalance < 0 ? 'is-neg' : ''}`}
+          style={{ '--i': 0 } as React.CSSProperties}
+        >
+          <p className="stat-label">Net balance</p>
+          <p className="stat-value">{formatMoney(Math.abs(totalBalance))}</p>
+          <p className="stat-foot">{totalBalance >= 0 ? 'To collect' : 'To refund'}</p>
+        </div>
+        <div className="stat" style={{ '--i': 1 } as React.CSSProperties}>
+          <p className="stat-label">Open bills</p>
+          <p className="stat-value">{unpaidBills.length}</p>
+          <p className="stat-foot">{formatMoney(totalUnpaid)}</p>
+        </div>
+        <div className="stat" style={{ '--i': 2 } as React.CSSProperties}>
+          <p className="stat-label">On credit</p>
+          <p className="stat-value">{ledger.length}</p>
+          <p className="stat-foot">Customer accounts</p>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="segmented" role="tablist" aria-label="Ledger views">
           <button
-            style={{
-              background: activeTab === 'ledger' ? '#007bff' : 'transparent',
-              color: activeTab === 'ledger' ? 'white' : '#666',
-              border: 'none',
-              padding: '10px 20px',
-              cursor: 'pointer',
-              borderRadius: '4px 4px 0 0',
-              fontWeight: '500',
-            }}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'ledger'}
+            className="segment"
             onClick={() => setActiveTab('ledger')}
           >
-            Customer Ledger
+            Balances
+            <span className="segment-count">{ledger.length}</span>
           </button>
           <button
-            style={{
-              background: activeTab === 'unpaid' ? '#007bff' : 'transparent',
-              color: activeTab === 'unpaid' ? 'white' : '#666',
-              border: 'none',
-              padding: '10px 20px',
-              cursor: 'pointer',
-              borderRadius: '4px 4px 0 0',
-              fontWeight: '500',
-            }}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'unpaid'}
+            className="segment"
             onClick={() => setActiveTab('unpaid')}
           >
-            Unpaid Bills
+            Unpaid
+            <span className="segment-count">{unpaidBills.length}</span>
           </button>
         </div>
-      </div>
 
-      {activeTab === 'ledger' && (
-        <div style={{ background: 'white', padding: '20px', borderRadius: '8px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #ddd' }}>
-                <th style={{ textAlign: 'left', padding: '12px', fontWeight: '600' }}>Customer</th>
-                <th style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>Debit</th>
-                <th style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>Credit</th>
-                <th style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>Balance</th>
-                <th style={{ textAlign: 'center', padding: '12px', fontWeight: '600' }}>Last Transaction</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ledger.map((entry) => (
-                <tr key={entry.customerId} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '12px' }}>{entry.name}</td>
-                  <td style={{ textAlign: 'right', padding: '12px' }}>₹{entry.totalDebit.toLocaleString()}</td>
-                  <td style={{ textAlign: 'right', padding: '12px' }}>₹{entry.totalCredit.toLocaleString()}</td>
-                  <td style={{
-                    textAlign: 'right',
-                    padding: '12px',
-                    color: entry.balance > 0 ? '#28a745' : '#dc3545',
-                    fontWeight: '600',
-                  }}>
-                    ₹{entry.balance.toLocaleString()}
-                  </td>
-                  <td style={{ textAlign: 'center', padding: '12px', fontSize: '12px', color: '#666' }}>
-                    {new Date(entry.lastTransaction).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {activeTab === 'ledger' &&
+          (ledger.length === 0 ? (
+            <div className="empty">
+              <span className="empty-mark">
+                <IconInbox />
+              </span>
+              <p className="empty-title">No credit accounts</p>
+              <p className="empty-body">
+                Customers appear here the moment a ticket is settled on account rather than paid.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="dl-head ledger-grid">
+                <span>Customer</span>
+                <span>Movement</span>
+                <span>Last activity</span>
+                <span style={{ textAlign: 'right' }}>Balance</span>
+              </div>
+              <ul className="dl">
+                {ledger.map((entry, index) => (
+                  <li
+                    className="dl-row ledger-grid"
+                    key={entry.customerId}
+                    style={{ '--i': index } as React.CSSProperties}
+                  >
+                    <span className="dl-primary">{entry.name}</span>
+                    <span className="dl-meta ledger-debit">
+                      <span className="mono">{formatMoney(entry.totalDebit)} out</span>
+                      <span className="sep" />
+                      <span className="mono">{formatMoney(entry.totalCredit)} in</span>
+                    </span>
+                    <span className="dl-meta ledger-when">
+                      Last {new Date(entry.lastTransaction).toLocaleDateString('en-AE')}
+                    </span>
+                    <span className={`dl-num ${entry.balance > 0 ? 'is-pos' : 'is-neg'}`}>
+                      {formatMoney(entry.balance)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ))}
 
-      {activeTab === 'unpaid' && (
-        <div style={{ background: 'white', padding: '20px', borderRadius: '8px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #ddd' }}>
-                <th style={{ textAlign: 'left', padding: '12px', fontWeight: '600' }}>Bill ID</th>
-                <th style={{ textAlign: 'left', padding: '12px', fontWeight: '600' }}>Customer</th>
-                <th style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>Amount</th>
-                <th style={{ textAlign: 'center', padding: '12px', fontWeight: '600' }}>Days Overdue</th>
-                <th style={{ textAlign: 'center', padding: '12px', fontWeight: '600' }}>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {unpaidBills.map((bill) => (
-                <tr key={bill.billId} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '12px', fontFamily: 'monospace', fontSize: '12px' }}>{bill.billId}</td>
-                  <td style={{ padding: '12px' }}>{bill.customerName}</td>
-                  <td style={{ textAlign: 'right', padding: '12px', fontWeight: '600' }}>₹{bill.amount.toLocaleString()}</td>
-                  <td style={{
-                    textAlign: 'center',
-                    padding: '12px',
-                    color: bill.daysOverdue > 30 ? '#dc3545' : bill.daysOverdue > 7 ? '#ffc107' : '#666',
-                  }}>
-                    {bill.daysOverdue} days
-                  </td>
-                  <td style={{ textAlign: 'center', padding: '12px', fontSize: '12px', color: '#666' }}>
-                    {new Date(bill.createdAt).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {activeTab === 'unpaid' &&
+          (unpaidBills.length === 0 ? (
+            <div className="empty">
+              <span className="empty-mark">
+                <IconCheck size={20} />
+              </span>
+              <p className="empty-title">Everything is paid up</p>
+              <p className="empty-body">No outstanding bills against any customer account.</p>
+            </div>
+          ) : (
+            <>
+              <div className="dl-head unpaid-grid">
+                <span>Customer</span>
+                <span>Age</span>
+                <span style={{ textAlign: 'right' }}>Amount</span>
+              </div>
+              <ul className="dl">
+                {unpaidBills.map((bill, index) => {
+                  const tone =
+                    bill.daysOverdue > 30 ? 'is-neg' : bill.daysOverdue > 7 ? 'is-gold' : '';
+                  return (
+                    <li
+                      className="dl-row unpaid-grid"
+                      key={bill.billId}
+                      style={{ '--i': index } as React.CSSProperties}
+                    >
+                      <span className="dl-primary">{bill.customerName}</span>
+                      <span className="dl-meta">
+                        <span className="mono">#{bill.billId}</span>
+                        <span className="sep" />
+                        <span>{new Date(bill.createdAt).toLocaleDateString('en-AE')}</span>
+                      </span>
+                      <span className="unpaid-age">
+                        <span className={`chip ${tone}`}>{bill.daysOverdue}d overdue</span>
+                      </span>
+                      <span className="dl-num">{formatMoney(bill.amount)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          ))}
+      </section>
     </div>
   );
 }

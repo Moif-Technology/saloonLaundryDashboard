@@ -1,0 +1,252 @@
+/* ============================================================
+   COUNTER CLOSES — saved Z reports, listed by day, and the
+   full report for a single close. Read-only throughout.
+   ============================================================ */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 36px;
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--ink-2);
+  transition: color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+}
+
+.back-link:active {
+  transform: translateX(-2px);
+}
+
+.back-link:hover {
+  color: var(--ink-0);
+}
+
+.is-flipped {
+  transform: rotate(180deg);
+}
+
+/* ---------- Day-grouped list ---------- */
+
+.closes {
+  display: grid;
+}
+
+.closes > li {
+  border-bottom: 1px solid var(--line);
+  animation: row-in var(--dur-2) var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+.close-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-4) 0;
+  color: var(--ink-3);
+  transition: transform var(--dur-1) var(--ease), opacity var(--dur-1) var(--ease);
+}
+
+.close-row:active {
+  transform: scale(0.99);
+  opacity: 0.82;
+}
+
+.close-body {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.close-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.close-no {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink-0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.close-figure {
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: var(--ink-0);
+}
+
+.close-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.close-meta .sep,
+.close-tags .sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  flex: none;
+}
+
+.close-tags {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+@media (min-width: 900px) {
+  .close-body {
+    grid-template-columns: minmax(0, 1.2fr) 200px 190px;
+    grid-template-areas:
+      'head figure tags'
+      'meta figure tags';
+    align-items: center;
+    column-gap: var(--s-6);
+  }
+
+  .close-head {
+    grid-area: head;
+  }
+  .close-meta {
+    grid-area: meta;
+  }
+  .close-figure {
+    grid-area: figure;
+    text-align: right;
+    font-size: 1.4rem;
+  }
+  .close-tags {
+    grid-area: tags;
+    justify-content: flex-end;
+  }
+}
+
+/* ---------- Drawer verdict (shared with the detail view) ---------- */
+
+.verdict {
+  padding: var(--s-5);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.verdict-label {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.verdict-figure {
+  margin-top: var(--s-2);
+  font-family: var(--mono);
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--ink-1);
+  overflow-wrap: anywhere;
+}
+
+.verdict-note {
+  margin-top: var(--s-2);
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.verdict.is-exact {
+  border-color: color-mix(in srgb, var(--pos) 34%, transparent);
+  background: var(--pos-soft);
+}
+.verdict.is-exact .verdict-label,
+.verdict.is-exact .verdict-figure,
+.verdict.is-exact .verdict-note {
+  color: var(--pos);
+}
+
+.verdict.is-over {
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+  background: var(--gold-soft);
+}
+.verdict.is-over .verdict-label,
+.verdict.is-over .verdict-figure,
+.verdict.is-over .verdict-note {
+  color: var(--gold-ink);
+}
+
+.verdict.is-short {
+  border-color: color-mix(in srgb, var(--neg) 34%, transparent);
+  background: var(--neg-soft);
+}
+.verdict.is-short .verdict-label,
+.verdict.is-short .verdict-figure,
+.verdict.is-short .verdict-note {
+  color: var(--neg);
+}
+
+/* ---------- Detail rows ---------- */
+
+.trail-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.staff-row,
+.move-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: var(--s-2);
+}
+
+.staff-row .dl-primary,
+.move-row .dl-primary {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.staff-row .dl-num,
+.move-row .dl-num {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.staff-row .dl-meta,
+.move-row .dl-meta {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+@media (min-width: 900px) {
+  .staff-row,
+  .move-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 180px;
+    row-gap: 0;
+    align-items: center;
+  }
+
+  .staff-row .dl-meta,
+  .move-row .dl-meta {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .staff-row .dl-num,
+  .move-row .dl-num {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}

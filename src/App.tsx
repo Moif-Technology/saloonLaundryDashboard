@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { authAPI } from './lib/auth';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
-import CounterClose from './pages/CounterClose';
+import CounterHistory from './pages/CounterHistory';
+import CounterCloseDetail from './pages/CounterCloseDetail';
 import DailySales from './pages/DailySales';
 import StaffPerformance from './pages/StaffPerformance';
 import Inventory from './pages/Inventory';
@@ -21,7 +22,12 @@ function App() {
   }, []);
 
   if (isLoading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="boot">
+        <div className="boot-mark">CL</div>
+        <p className="boot-label">Counterline</p>
+      </div>
+    );
   }
 
   return (
@@ -29,13 +35,26 @@ function App() {
       <Routes>
         <Route
           path="/login"
-          element={!isAuthenticated ? <Login setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/" />}
+          element={
+            !isAuthenticated ? (
+              <Login setIsAuthenticated={setIsAuthenticated} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
         />
         <Route
-          element={isAuthenticated ? <Layout /> : <Navigate to="/login" />}
+          element={
+            isAuthenticated ? (
+              <Layout setIsAuthenticated={setIsAuthenticated} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
         >
           <Route path="/" element={<Dashboard />} />
-          <Route path="/counter-close" element={<CounterClose />} />
+          <Route path="/counter-closes" element={<CounterHistory />} />
+          <Route path="/counter-closes/:closeId" element={<CounterCloseDetail />} />
           <Route path="/daily-sales" element={<DailySales />} />
           <Route path="/staff-performance" element={<StaffPerformance />} />
           <Route path="/inventory" element={<Inventory />} />

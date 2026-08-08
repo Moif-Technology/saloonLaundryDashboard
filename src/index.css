@@ -1,19 +1,227 @@
-* {
+/* ============================================================
+   COUNTERLINE — DESIGN TOKENS
+   Mobile-first control surface for salon & laundry counters.
+   Palette inherited from SalonPOS: deep wine primary (#790728),
+   gold secondary (#c9a227), warm rose-grey neutrals. One temperature
+   throughout — no cool greys mixed in.
+   ============================================================ */
+
+:root {
+  /* --- Surfaces (light) --- */
+  --canvas: #f4f2f3;
+  --surface: #ffffff;
+  --raised: #ffffff;
+  --sunken: #ece7e9;
+  --overlay: rgba(31, 17, 20, 0.46);
+
+  /* --- Hairlines --- */
+  --line: #e5dde0;
+  --line-strong: #d8cdd0;
+
+  /* --- Ink (warm, tinted toward the wine) --- */
+  --ink-0: #1f1114;
+  --ink-1: #4a373b;
+  --ink-2: #7a6a6e;
+  --ink-3: #a3959a;
+
+  /* --- Primary accent: SalonPOS wine --- */
+  --accent: #790728;
+  --accent-press: #5c0520;
+  --accent-ink: #ffffff;
+  --accent-soft: #f5e6e8;
+  --accent-line: rgba(121, 7, 40, 0.22);
+
+  /* --- Secondary accent: SalonPOS gold. Fills and marks only. --- */
+  --gold: #c9a227;
+  --gold-ink: #8a6d10;
+  --gold-soft: rgba(201, 162, 39, 0.14);
+
+  /* --- Semantic --- */
+  --pos: #1f9254;
+  --pos-soft: rgba(31, 146, 84, 0.11);
+  --warn: #8a6d10;
+  --warn-soft: rgba(201, 162, 39, 0.16);
+  --neg: #d5304f;
+  --neg-soft: rgba(213, 48, 79, 0.1);
+
+  /* --- Elevation: wide, wine-tinted, low-opacity --- */
+  --shadow-sm: 0 1px 2px rgba(31, 17, 20, 0.05);
+  --shadow-md: 0 12px 28px -18px rgba(31, 17, 20, 0.38);
+  --shadow-lg: 0 26px 60px -28px rgba(31, 17, 20, 0.45);
+  --shadow-bar: 0 -1px 0 var(--line), 0 -18px 40px -28px rgba(31, 17, 20, 0.4);
+
+  /* --- Radii --- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-pill: 999px;
+
+  /* --- Space scale --- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 56px;
+
+  /* --- Type --- */
+  --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', sans-serif;
+  --mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', 'JetBrains Mono',
+    'Roboto Mono', monospace;
+
+  --t-display: clamp(2.125rem, 10.5vw, 3rem);
+  --t-xl: clamp(1.375rem, 5.4vw, 1.75rem);
+  --t-lg: 1.125rem;
+  --t-md: 0.9375rem;
+  --t-sm: 0.8125rem;
+  --t-xs: 0.6875rem;
+
+  /* --- Motion --- */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-1: 160ms;
+  --dur-2: 300ms;
+  --dur-3: 520ms;
+
+  /* --- Shell metrics --- */
+  --header-h: 56px;
+  --tabbar-h: 60px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --gutter: 18px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 28px;
+    --header-h: 64px;
+  }
+}
+
+@media (min-width: 1080px) {
+  :root {
+    --gutter: 40px;
+  }
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font);
+  font-size: var(--t-md);
+  line-height: 1.5;
+  color: var(--ink-0);
+  background: var(--canvas);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #f5f5f5;
+  font-variant-numeric: tabular-nums;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #root {
-  width: 100%;
-  height: 100vh;
+  min-height: 100dvh;
+  isolation: isolate;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+}
+
+button {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink-0);
+}
+
+/* Scrollbars stay out of the way until used. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--r-pill);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

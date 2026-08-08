@@ -1,0 +1,112 @@
+/* ============================================================
+   STAFF PERFORMANCE — ranked list, bar-led comparison.
+   ============================================================ */
+
+.board {
+  display: grid;
+}
+
+.board-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: var(--s-3);
+  padding: var(--s-4) 0;
+  border-bottom: 1px solid var(--line);
+  animation: row-in var(--dur-2) var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.board-rank {
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--ink-3);
+  padding-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+/* The top three earn the accent; the rest stay quiet. */
+.board-row:nth-child(-n + 3) .board-rank {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.board-body {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.board-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.board-name {
+  font-size: var(--t-md);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-figure {
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.board-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-xs);
+  color: var(--ink-3);
+}
+
+.board-meta .sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  flex: none;
+}
+
+@media (min-width: 900px) {
+  .board-row {
+    grid-template-columns: 40px minmax(0, 1fr);
+    padding: var(--s-5) 0;
+  }
+
+  .board-body {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    grid-template-areas:
+      'head figure'
+      'meter figure'
+      'meta figure';
+    align-items: center;
+    column-gap: var(--s-6);
+  }
+
+  .board-head {
+    grid-area: head;
+  }
+  .board-body > .meter {
+    grid-area: meter;
+  }
+  .board-meta {
+    grid-area: meta;
+  }
+  .board-figure {
+    grid-area: figure;
+    text-align: right;
+    font-size: 1.4rem;
+  }
+}

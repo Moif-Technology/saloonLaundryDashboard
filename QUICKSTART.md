@@ -31,7 +31,7 @@ Expected output:
 
 **Login:**
 ```
-Email:    admin@moifone.com (or any user in your DB)
+Email:    your UAE salon/laundry admin user from the DB
 Password: (actual password from DB)
 ```
 

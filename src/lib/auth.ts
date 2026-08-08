@@ -6,6 +6,8 @@ export interface AuthUser {
   email: string;
   name: string;
   role: string;
+  roleId?: string | number;
+  staffId?: string | number;
   permissions: string[];
 }
 
@@ -22,7 +24,32 @@ export const authAPI = {
         },
       });
     }
-    return api.post('/api/auth/login', { email, password });
+    return api.post('/api/salon-dashboard/auth/login', {
+      username: email,
+      email,
+      password,
+    }).then((response) => {
+      const data = response.data || {};
+      const sessionUser = data.session?.user || {};
+      const user = data.user || {};
+
+      return {
+        ...response,
+        data: {
+          ...data,
+          token: data.token || data.accessToken,
+          user: {
+            id: String(user.id || sessionUser.staffPk || ''),
+            email: user.email || sessionUser.email || email,
+            name: user.name || sessionUser.staffName || '',
+            role: user.role || sessionUser.roleName || 'Admin',
+            roleId: user.roleId || sessionUser.role,
+            staffId: user.staffId || sessionUser.staffId,
+            permissions: user.permissions || data.session?.permissions || [],
+          },
+        },
+      };
+    });
   },
 
   logout: () => {
