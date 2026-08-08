@@ -31,3 +31,7 @@ dist-ssr
 # Capacitor
 android/
 ios/
+
+# Build artifacts
+*.apk
+*.aab

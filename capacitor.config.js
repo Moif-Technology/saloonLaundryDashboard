@@ -1,17 +1,18 @@
-// Detect environment
-var isProduction = process.env.NODE_ENV === 'production';
-// Set API base based on environment
-var apiBase = isProduction
-    ? 'https://api.moifone.com' // Production
-    : 'http://localhost:5010'; // Development
+// The app ships the built `dist/` inside the APK — no `server.url`, or the WebView
+// would load a remote page instead of the bundled UI.
+//
+// The API base is baked into the web build at `npm run build` time from
+// .env.production (VITE_API_BASE=https://api.moifone.com). Nothing API-related
+// belongs in this file.
+//
+// androidScheme 'https' makes the WebView origin `https://localhost`, which is
+// already allowed in the backend's CORS_ORIGINS.
 var config = {
     appId: 'com.moifone.salonlaundry.dashboard',
     appName: 'Salon Laundry Dashboard',
     webDir: 'dist',
     server: {
         androidScheme: 'https',
-        url: apiBase,
-        cleartext: !isProduction,
     },
     plugins: {
         SplashScreen: {
@@ -19,6 +20,4 @@ var config = {
         },
     },
 };
-console.log("[Capacitor] Dashboard Environment: ".concat(isProduction ? 'PRODUCTION' : 'DEVELOPMENT'));
-console.log("[Capacitor] API Base: ".concat(apiBase));
 export default config;
