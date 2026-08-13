@@ -6,7 +6,6 @@ import {
   IconAlert,
   IconArrow,
   IconLedger,
-  IconRefresh,
   IconStaff,
   IconStock,
   IconVault,
@@ -27,10 +26,10 @@ const splitMoney = (value: number) => {
 };
 
 const SHORTCUTS = [
-  { to: '/counter-closes', label: 'Counter closes', note: 'Saved Z reports, day by day', icon: IconVault },
-  { to: '/inventory', label: 'Check stock', note: 'Reorder levels and warnings', icon: IconStock },
-  { to: '/staff-performance', label: 'Staff numbers', note: 'Revenue and tickets per person', icon: IconStaff },
-  { to: '/customer-ledger', label: 'Credit exposure', note: 'Outstanding customer balances', icon: IconLedger },
+  { to: '/counter-closes', label: 'Review Z reports', note: 'Settled shifts and cash counts', icon: IconVault },
+  { to: '/inventory', label: 'Check stock', note: 'Low stock and reorder alerts', icon: IconStock },
+  { to: '/staff-performance', label: 'Staff performance', note: 'Tickets and revenue by person', icon: IconStaff },
+  { to: '/customer-ledger', label: 'Collect credit bills', note: 'Outstanding customer balances', icon: IconLedger },
 ];
 
 export default function Dashboard() {
@@ -42,6 +41,9 @@ export default function Dashboard() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const today = new Date().toISOString().split('T')[0];
+  const [dateFrom, setDateFrom] = useState(today);
+  const [dateTo, setDateTo] = useState(today);
 
   useEffect(() => {
     fetchDashboardData();
@@ -106,6 +108,7 @@ export default function Dashboard() {
     );
   }
   const revenue = splitMoney(stats.todayRevenue);
+  const vsYesterdayPct: number | null = null;
 
   const isEmptyToday =
     !error && stats.totalTransactions === 0 && stats.todayRevenue === 0;
@@ -113,38 +116,101 @@ export default function Dashboard() {
   return (
 
     <div className="page">
-      <div className="page-head">
-        <div>
-          <p className="page-eyebrow">Today</p>
-          <h1 className="page-title">Counter overview</h1>
-        </div>
-        <button
-          type="button"
-          className="btn btn-quiet btn-icon"
-          onClick={fetchDashboardData}
-          aria-label="Refresh counter data"
-        >
-          <IconRefresh />
-        </button>
+<div className="page-head">
+  <div>
+    <h1 className="page-title">
+      {new Date().getHours() < 12
+        ? 'Good morning'
+        : new Date().getHours() < 17
+          ? 'Good afternoon'
+          : 'Good evening'}
+    </h1>
+    <p className="page-sub">
+      {new Date().toLocaleDateString('en-AE', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })}
+    </p>
+  </div>
+  <div className="page-head-actions">
+  <div className="page-head-filter">
+    <span className="field-label">Filter: Today</span>
+    <div className="page-head-range">
+      <div className="field">
+        <label className="field-label" htmlFor="dash-date-from">
+          From
+        </label>
+        <input
+          id="dash-date-from"
+          className="input"
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+        />
       </div>
+      <div className="field">
+        <label className="field-label" htmlFor="dash-date-to">
+          To
+        </label>
+        <input
+          id="dash-date-to"
+          className="input"
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+        />
+      </div>
+    </div>
+  </div>
+  <Link to="/daily-sales" className="btn btn-primary">
+    + New Sale
+  </Link>
+  </div>
+</div>
 
       {error && (
-        <div className="notice is-error" role="alert" style={{ marginBottom: 24 }}>
-          <IconAlert />
-          <span>{error}</span>
-        </div>
-      )}
+  <div className="notice is-error" role="alert" style={{ marginBottom: 24 }}>
+    <IconAlert />
+    <span>{error}</span>
+  </div>
+)}
 
-      {/* Headline figure carries the page — deliberately unboxed. */}
-      <section className="headline">
+<div className="dash-overview-head">
+  <h2 className="page-title">Counter overview</h2>
+</div>
+
+{/* Headline figure carries the page — deliberately unboxed. */}
+<section className="headline">
         <p className="headline-label">
           <span className="dot is-live" style={{ color: 'var(--accent)' }} />
           Revenue booked today
         </p>
         <p className="headline-figure">
-          <span className="headline-code">{revenue.code}</span>
-          {revenue.figure}
-        </p>
+  <span className="headline-code">{revenue.code}</span>
+  {revenue.figure}
+</p>
+{vsYesterdayPct == null ? (
+  <p className="headline-compare is-muted">vs yesterday unavailable</p>
+) : (
+  <p
+    className={`headline-compare${
+      vsYesterdayPct >= 0 ? ' is-pos' : ' is-neg'
+    }`}
+  >
+    {vsYesterdayPct >= 0 ? '↑' : '↓'}{' '}
+    {vsYesterdayPct >= 0 ? '+' : ''}
+    {vsYesterdayPct}% vs yesterday
+  </p>
+)}
+<p className="headline-context">
+  {stats.totalTransactions} ticket{stats.totalTransactions === 1 ? '' : 's'} today
+  {' · '}
+  {stats.pendingBills > 0
+    ? `${stats.pendingBills} credit bill${stats.pendingBills === 1 ? '' : 's'} open`
+    : 'No credit bills open'}
+</p>
         {isEmptyToday && (
   <Link
     to="/daily-sales"
@@ -178,13 +244,15 @@ export default function Dashboard() {
       </section>
 
       <section className="section">
-        <div className="section-head">
-          <h2 className="section-title">Next actions</h2>
-        </div>
+  <div className="section-head">
+  <h2 className="section-title">Operational shortcuts</h2>
+  </div>
         <div className="shortcuts">
-          {SHORTCUTS.map((item, index) => {
-            const Icon = item.icon;
-            return (
+        {SHORTCUTS.map((item, index) => {
+  const Icon = item.icon;
+  const attentionCount =
+    item.to === '/customer-ledger' ? stats.pendingBills : 0;
+  return (
               <Link
                 key={item.to}
                 to={item.to}
@@ -195,9 +263,14 @@ export default function Dashboard() {
                   <Icon size={19} />
                 </span>
                 <span className="shortcut-text">
-                  <strong>{item.label}</strong>
-                  <em>{item.note}</em>
-                </span>
+  <strong>
+    {item.label}
+    {attentionCount > 0 && (
+      <span className="shortcut-badge">{attentionCount}</span>
+    )}
+  </strong>
+  <em>{item.note}</em>
+</span>
                 <IconArrow />
               </Link>
             );
