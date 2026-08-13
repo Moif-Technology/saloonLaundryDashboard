@@ -105,10 +105,13 @@ export default function Dashboard() {
       </div>
     );
   }
-
   const revenue = splitMoney(stats.todayRevenue);
 
+  const isEmptyToday =
+    !error && stats.totalTransactions === 0 && stats.todayRevenue === 0;
+  
   return (
+
     <div className="page">
       <div className="page-head">
         <div>
@@ -142,22 +145,27 @@ export default function Dashboard() {
           <span className="headline-code">{revenue.code}</span>
           {revenue.figure}
         </p>
-        <p className="headline-note">
-          Across {stats.totalTransactions} {stats.totalTransactions === 1 ? 'ticket' : 'tickets'}
-          {stats.pendingBills > 0 ? ` · ${stats.pendingBills} on credit` : ' · nothing on credit'}
-        </p>
+        {isEmptyToday && (
+  <Link
+    to="/daily-sales"
+    className="btn btn-primary"
+    style={{ marginTop: 16, display: 'inline-flex' }}
+  >
+    New Sale
+  </Link>
+)}
       </section>
 
       <section className="stat-rail" aria-label="Today at a glance">
         <div className="stat" style={{ '--i': 0 } as React.CSSProperties}>
           <p className="stat-label">Tickets</p>
           <p className="stat-value">{stats.totalTransactions}</p>
-          <p className="stat-foot">Closed sales</p>
+          <p className="stat-foot">{isEmptyToday ? 'Waiting on first sale' : 'Closed sales'}</p>
         </div>
         <div className="stat" style={{ '--i': 1 } as React.CSSProperties}>
           <p className="stat-label">Average sale</p>
           <p className="stat-value">{formatMoney(stats.averageTransaction)}</p>
-          <p className="stat-foot">Per ticket</p>
+          <p className="stat-foot">{isEmptyToday ? 'Shows after first ticket' : 'Per ticket'}</p>
         </div>
         <div
           className={`stat${stats.pendingBills > 0 ? ' is-warn' : ''}`}
@@ -165,7 +173,7 @@ export default function Dashboard() {
         >
           <p className="stat-label">Pending bills</p>
           <p className="stat-value">{stats.pendingBills}</p>
-          <p className="stat-foot">Credit sales open</p>
+          <p className="stat-foot">{isEmptyToday ? 'None yet' : 'Credit sales open'}</p>
         </div>
       </section>
 
