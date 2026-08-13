@@ -51,8 +51,8 @@ npm run build
 Create `.env` file based on `.env.example`:
 
 ```env
-VITE_API_BASE=http://localhost:5010  # Development
-# VITE_API_BASE=https://api.moifone.com  # Production
+VITE_API_BASE=https://api.moifone.com
+VITE_USE_MOCK=false
 ```
 
 ## Mobile Build

@@ -102,7 +102,7 @@ File: `.env`
 
 ```env
 VITE_USE_MOCK=true    # Set to false to use real API
-VITE_API_BASE=http://localhost:5010
+VITE_API_BASE=https://api.moifone.com
 ```
 
 ### Switch to Real API (when backend ready)
@@ -110,9 +110,7 @@ VITE_API_BASE=http://localhost:5010
 Edit `.env`:
 ```env
 VITE_USE_MOCK=false
-VITE_API_BASE=https://api.moifone.com  # Production
-# or
-VITE_API_BASE=http://localhost:5010    # Development
+VITE_API_BASE=https://api.moifone.com
 ```
 
 Then restart dev server.

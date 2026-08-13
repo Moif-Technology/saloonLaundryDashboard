@@ -68,7 +68,7 @@ salon-laundry-dashboard/
 
 ## API Endpoints Available
 
-All at: `http://localhost:5010/api/salon-dashboard/`
+All at: `https://api.moifone.com/api/salon-dashboard/`
 
 **Counter Close:**
 - `GET /counter-close/summary?date=YYYY-MM-DD`
@@ -223,7 +223,7 @@ npx vite --port 5012
 ```
 
 **API not responding?**
-- Check backend is running: `curl http://localhost:5010/health`
+- Check production backend is reachable: `curl https://api.moifone.com/health`
 - Check `.env` has correct `VITE_API_BASE`
 - Check browser console for error messages
 
