@@ -90,17 +90,27 @@ export default function Layout({ setIsAuthenticated }: LayoutProps) {
 
   const active = NAV.find((item) => matches(item.to, location.pathname));
   const inSecondary = SECONDARY.some((item) => matches(item.to, location.pathname));
-
+  const clockLabel = [
+    now.toLocaleDateString('en-AE', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    }),
+    now.toLocaleTimeString('en-AE', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  ].join(' · ');
   return (
     <div className="shell">
       <aside className="rail">
-        <div className="rail-brand">
-          <span className="brand-mark">CL</span>
-          <span className="brand-text">
-            <strong>Counterline</strong>
-            <em>Salon &amp; Laundry</em>
-          </span>
-        </div>
+      <div className="rail-brand">
+  <span className="brand-mark">CL</span>
+  <span className="brand-text">
+    <strong>Counterline</strong>
+    <em>Salon &amp; Laundry</em>
+  </span>
+</div>
 
         <nav className="rail-nav" aria-label="Sections">
           {NAV.map((item) => {
@@ -128,41 +138,32 @@ export default function Layout({ setIsAuthenticated }: LayoutProps) {
             </span>
           </div>
           <button type="button" className="btn btn-quiet btn-sm btn-block" onClick={handleLogout}>
-            <IconSignOut size={17} />
-            Sign out
-          </button>
-        </div>
+    <IconSignOut size={17} />
+    Sign out
+  </button>
+  <time className="rail-foot-clock" dateTime={now.toISOString()} aria-live="polite">
+    {clockLabel}
+  </time>
+</div>
       </aside>
 
       <header className="appbar">
-        <div className="appbar-lead">
-          <span className="brand-mark is-compact">CL</span>
-          <span className="appbar-titles">
-            <strong>{active?.label || 'Counterline'}</strong>
-            <em>
-              {now.toLocaleDateString('en-AE', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-              })}
-              {' · '}
-              {now.toLocaleTimeString('en-AE', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </em>
-          </span>
-        </div>
+  <div className="appbar-lead">
+    <span className="brand-mark is-compact">CL</span>
+    <span className="appbar-titles">
+      <strong>{active?.label || 'Counterline'}</strong>
+    </span>
+  </div>
 
-        <button
-          type="button"
-          className="avatar-btn"
-          onClick={() => setSheetOpen(true)}
-          aria-label="Account and more sections"
-        >
-          {initialsOf(user?.name)}
-        </button>
-      </header>
+  <button
+  type="button"
+  className="avatar-btn"
+  onClick={() => setSheetOpen(true)}
+  aria-label="Account and more sections"
+>
+  {initialsOf(user?.name)}
+</button>
+</header>
 
       <main className="canvas">
         <Outlet />
