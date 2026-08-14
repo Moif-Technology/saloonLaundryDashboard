@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { counterHistoryAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
-import { IconAlert, IconArrow, IconInbox, IconRefresh } from '../components/Icon';
+import { IconArrow, IconClock, IconInbox, IconRefresh } from '../components/Icon';
 import './CounterHistory.css';
+import './Dashboard.css';
 
 interface CloseRow {
   closeId: number;
@@ -63,13 +64,40 @@ export default function CounterHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [dateFrom, setDateFrom] = useState(daysAgo(6));
-  const [dateTo, setDateTo] = useState(isoDay(new Date()));
+const [dateTo, setDateTo] = useState(isoDay(new Date()));
+const [rangeOpen, setRangeOpen] = useState(false);
+const rangeRef = useRef<HTMLDivElement>(null);
+const today = isoDay(new Date());
 
-  /* Live: changing either date refetches, no Load button. */
-  useEffect(() => {
-    fetchHistory();
-  }, [dateFrom, dateTo]);
+const formatDashDate = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString('en-AE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
+const rangeLabel =
+  dateFrom === dateTo && dateFrom === today
+    ? `Today: ${formatDashDate(dateFrom)}`
+    : dateFrom === dateTo
+      ? formatDashDate(dateFrom)
+      : `${formatDashDate(dateFrom)} – ${formatDashDate(dateTo)}`;
+
+/* Live: changing either date refetches, no Load button. */
+useEffect(() => {
+  fetchHistory();
+}, [dateFrom, dateTo]);
+
+useEffect(() => {
+  if (!rangeOpen) return;
+  const close = (e: MouseEvent) => {
+    if (rangeRef.current && !rangeRef.current.contains(e.target as Node)) {
+      setRangeOpen(false);
+    }
+  };
+  document.addEventListener('mousedown', close);
+  return () => document.removeEventListener('mousedown', close);
+}, [rangeOpen]);
   const fetchHistory = async () => {
     try {
       setIsLoading(true);
@@ -94,56 +122,63 @@ export default function CounterHistory() {
   return (
     <div className="page">
       <div className="page-head">
-        <div>
-          <p className="page-eyebrow">Settled shifts</p>
-          <h1 className="page-title">Counter closes</h1>
-          <p className="page-sub">
-            Z reports already saved from the till. Tap a close to read the full report.
-          </p>
-        </div>
-        <button
-          type="button"
-          className={`btn btn-quiet btn-icon${isLoading ? ' is-busy' : ''}`}
-          onClick={fetchHistory}
-          aria-label="Reload counter close history"
-        >
-          <IconRefresh />
-        </button>
-      </div>
+  <div className="page-head-intro">
+    <p className="page-eyebrow">Settled shifts</p>
+    <h1 className="page-title">Counter closes</h1>
+    <p className="page-sub">
+      Z reports already saved from the till. Tap a close to read the full report.
+    </p>
+  </div>
 
-      {error && (
-        <div className="notice is-error" role="alert" style={{ marginBottom: 20 }}>
-          <IconAlert />
-          <span>{error}</span>
+  <div className="page-head-actions">
+    <div className="dash-date-range" ref={rangeRef}>
+      <button
+        type="button"
+        className="btn btn-quiet dash-date-trigger"
+        aria-expanded={rangeOpen}
+        aria-haspopup="dialog"
+        onClick={() => setRangeOpen((open) => !open)}
+      >
+        <IconClock size={16} />
+        <span>{rangeLabel}</span>
+        <span className="dash-date-chevron" aria-hidden="true">▾</span>
+      </button>
+      {rangeOpen && (
+        <div className="dash-date-panel" role="dialog" aria-label="Date range">
+          <label className="dash-date-field">
+            <span>From</span>
+            <input
+              className="input"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+          </label>
+          <label className="dash-date-field">
+            <span>To</span>
+            <input
+              className="input"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </label>
         </div>
       )}
+    </div>
 
-      <div className="range">
-        <div className="field">
-          <label className="field-label" htmlFor="close-from">
-            From
-          </label>
-          <input
-            id="close-from"
-            className="input"
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-          />
-        </div>
-        <div className="field">
-          <label className="field-label" htmlFor="close-to">
-            To
-          </label>
-          <input
-            id="close-to"
-            className="input"
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-          />
-        </div>
-      </div>
+    <button
+      type="button"
+      className={`btn btn-primary${isLoading ? ' is-busy' : ''}`}
+      onClick={fetchHistory}
+      disabled={isLoading}
+      aria-label="Reload counter close history"
+    >
+      <IconRefresh size={16} />
+      Refresh
+    </button>
+  </div>
+</div>
 
       {isLoading ? (
         <div className="sk-rows" style={{ marginTop: 28 }}>

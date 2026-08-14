@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { counterCloseAPI, dailySalesAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
-import { authAPI } from '../lib/auth';
+
 import {
   IconAlert,
   IconArrow,
@@ -162,66 +163,21 @@ const rangeLabel =
     );
   }
   const revenue = splitMoney(stats.todayRevenue);
-  const vsYesterdayPct: number | null = null;
-  const paymentAmount = (...aliases: string[]) =>
-    stats.paymentMethods
-      .filter((item) =>
-        aliases.some((alias) => item.method.toLowerCase() === alias.toLowerCase())
-      )
-      .reduce((sum, item) => sum + (item.amount || 0), 0);
-  
-  const cashAmount = paymentAmount('cash');
-  const cardAmount = paymentAmount('card');
-  const onlineAmount = paymentAmount('online', 'credit');
-  const isEmptyToday =
+const vsYesterdayPct: number | null = null;
+const isEmptyToday =
     !error && stats.totalTransactions === 0 && stats.todayRevenue === 0;
   
-  return (
-
-    <div className="page">
+    return (
+      <>
+      <div className="page">
 <div className="page-head">
 <div className="page-head-intro">
-  <h1 className="page-head-greeting">
-    {(() => {
-      const now = new Date();
-      const hours = now.getHours();
-      const greeting =
-        hours < 12 ? 'Good morning' : hours < 17 ? 'Good afternoon' : 'Good evening';
-      const name = authAPI.getCurrentUser()?.name?.split(' ')[0] || 'there';
-      const date = now.toLocaleDateString('en-AE', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-      });
-      const time = now.toLocaleTimeString('en-AE', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      });
-      return `${greeting}, ${name} · ${date} · ${time}`;
-    })()}
-    </h1>
-    {error && (
-    <div
-      className={`dash-toast is-error${toastExiting ? ' is-exiting' : ''}`}
-      role="alert"
-      aria-live="polite"
-    >
-      <IconAlert size={16} />
-      <span className="dash-toast-text">
-        {isLoading ? 'Syncing…' : error}
-      </span>
-      {!isLoading && (
-        <button
-          type="button"
-          className="dash-toast-action"
-          onClick={fetchDashboardData}
-        >
-          Try Again
-        </button>
-      )}
-    </div>
-  )}
+  <p className="page-eyebrow">Overview</p>
+  <h1 className="page-title">Counter overview</h1>
+  <p className="page-sub">
+    Real-time snapshot of today's revenue, active tickets, and shift metrics.
+  </p>
+  
 </div>
 
 <div className="page-head-actions">
@@ -279,7 +235,6 @@ const rangeLabel =
 
 
 <section className="dash-revenue-card" aria-label="Counter overview">
-<h2 className="dash-revenue-card-title">Counter overview</h2>
   <div className="dash-revenue-card-body">
     <div className="dash-revenue-card-main">
       <div className="headline">
@@ -319,28 +274,11 @@ const rangeLabel =
           >
             New Sale
           </Link>
-        )}
-      </div>
-    </div>
-    <aside className="dash-revenue-card-aside" aria-label="Payment breakdown">
-  <p className="dash-pay-title">By payment method</p>
-  <ul className="dash-pay-list">
-    <li className="dash-pay-row">
-      <span className="dash-pay-label">Cash</span>
-      <span className="dash-pay-value">{formatMoney(cashAmount)}</span>
-    </li>
-    <li className="dash-pay-row">
-      <span className="dash-pay-label">Card</span>
-      <span className="dash-pay-value">{formatMoney(cardAmount)}</span>
-    </li>
-    <li className="dash-pay-row">
-      <span className="dash-pay-label">Online</span>
-      <span className="dash-pay-value">{formatMoney(onlineAmount)}</span>
-    </li>
-  </ul>
-</aside>
-  </div>
-</section>
+              )}
+              </div>
+            </div>
+          </div>
+        </section>
 
 <section className="dash-metrics" aria-label="Today at a glance">
 <div className="dash-metric-card stat" style={{ '--i': 0 } as React.CSSProperties}>
@@ -404,8 +342,34 @@ const rangeLabel =
               </Link>
             );
           })}
-        </div>
-      </section>
-    </div>
+          </div>
+ </section>
+      </div>
+
+      {error &&
+        createPortal(
+          <div
+            className={`dash-toast is-error${toastExiting ? ' is-exiting' : ''}`}
+            role="alert"
+            aria-live="polite"
+          >
+            <IconAlert size={16} />
+            <span className="dash-toast-text">
+              {isLoading ? 'Syncing…' : error}
+            </span>
+            {!isLoading && (
+              <button
+                type="button"
+                className="dash-toast-action"
+                onClick={fetchDashboardData}
+              >
+                Try Again
+              </button>
+            )}
+          </div>,
+          document.body
+        )}
+    </> 
   );
 }
+

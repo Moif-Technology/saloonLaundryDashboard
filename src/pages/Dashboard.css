@@ -5,32 +5,37 @@
 /* ---------- Header: greeting left, range + CTA right ---------- */
 /* ---------- Floating toast (errors) ---------- */
 .dash-toast {
-  position: relative;
-  z-index: 1000;
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 24px !important;
+  z-index: 99999;
   width: fit-content;
-  margin-left: 0;
-  margin-right: auto;
-  margin-top: var(--s-2);
-  margin-bottom: 0;
+  max-width: min(22rem, calc(100vw - 48px));
+  margin: 0;
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  max-width: min(22rem, calc(100vw - 48px));
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid color-mix(in srgb, var(--neg) 28%, transparent);
+  border-radius: 9999px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
   font-size: var(--t-sm);
   transition: opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
   animation: dash-toast-in var(--dur-2) var(--ease) both;
 }
 @media (max-width: 639px) {
   .dash-toast {
-    width: 100%;
-    margin-left: 0;
+    right: 24px;
+    left: 24px;
+    width: auto;
     max-width: none;
   }
 }
 @keyframes dash-toast-in {
   from {
     opacity: 0;
-    transform: translate3d(0, -12px, 0);
+    transform: translate3d(0, 12px, 0);
   }
   to {
     opacity: 1;
@@ -40,13 +45,15 @@
 .dash-toast.is-exiting {
   animation: none;
   opacity: 0;
-  transform: translate3d(0, -12px, 0);
+  transform: translate3d(0, 12px, 0);
   pointer-events: none;
 }
 
 
 .dash-toast.is-error {
   color: var(--ink-1);
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--neg) 28%, transparent);
 }
 
 .dash-toast.is-error svg {
@@ -104,14 +111,6 @@
   flex: 1 1 auto;
 }
 
-.page-head-greeting {
-  margin: 0;
-  font-size: var(--t-md);
-  font-weight: 500;
-  color: var(--ink-1);
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-}
 
 .page-head-actions {
   display: flex;
@@ -224,16 +223,6 @@
     width: 100%;
   }
 
-  .page-head-greeting {
-    white-space: normal;
-  }
-}
-@media (min-width: 640px) {
-  .page-head-greeting {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
 }
 .dash-revenue-card {
   margin-bottom: var(--s-8);
@@ -245,13 +234,7 @@
   animation: page-in var(--dur-3) var(--ease) both;
 }
 
-.dash-revenue-card-title {
-  margin: 0 0 var(--s-4);
-  font-size: var(--t-lg);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  color: var(--ink-0);
-}
+
 
 @media (min-width: 640px) {
   .dash-revenue-card {
@@ -269,14 +252,6 @@
   grid-template-columns: 1fr;
   gap: var(--s-5);
   min-width: 0;
-}
-
-@media (min-width: 640px) {
-  .dash-revenue-card-body {
-    grid-template-columns: 3fr 2fr; /* 60% / 40% */
-    gap: var(--s-6);
-    align-items: start;
-  }
 }
 
 .dash-revenue-card-main {
@@ -337,9 +312,7 @@
   overflow-wrap: anywhere;
 }
 @media (min-width: 640px) {
-  .dash-revenue-card-title {
-    margin-bottom: var(--s-3);
-  }
+  
 
   .dash-revenue-card-body {
     gap: var(--s-5);

@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
 import { dailySalesAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
-import { IconAlert, IconInbox, IconRefresh } from '../components/Icon';
+import { IconAlert, IconClock, IconInbox, IconRefresh } from '../components/Icon';
 import './DailySales.css';
+import './Dashboard.css';
 
 interface SalesData {
   totalRevenue: number;
@@ -16,18 +19,61 @@ export default function DailySales() {
   const [salesData, setSalesData] = useState<SalesData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0]);
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  const [toastExiting, setToastExiting] = useState(false);
+const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /* Live: any change to the range refetches, no Load button to press. */
-  useEffect(() => {
-    fetchSalesData();
-  }, [dateFrom, dateTo]);
+const dismissToast = () => {
+  if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+  setToastExiting(true);
+  dismissTimerRef.current = setTimeout(() => {
+    setError('');
+    setToastExiting(false);
+    dismissTimerRef.current = null;
+  }, 300);
+};
+const today = new Date().toISOString().split('T')[0];
+const [dateFrom, setDateFrom] = useState(today);
+const [dateTo, setDateTo] = useState(today);
+const [rangeOpen, setRangeOpen] = useState(false);
+const rangeRef = useRef<HTMLDivElement>(null);
 
+const formatDashDate = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString('en-AE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+const rangeLabel =
+  dateFrom === dateTo && dateFrom === today
+    ? `Today: ${formatDashDate(dateFrom)}`
+    : dateFrom === dateTo
+      ? formatDashDate(dateFrom)
+      : `${formatDashDate(dateFrom)} – ${formatDashDate(dateTo)}`;
+
+/* Live: any change to the range refetches, no Load button to press. */
+useEffect(() => {
+  fetchSalesData();
+}, [dateFrom, dateTo]);
+useEffect(() => {
+  return () => {
+    if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+  };
+}, []);
+useEffect(() => {
+  if (!rangeOpen) return;
+  const close = (e: MouseEvent) => {
+    if (rangeRef.current && !rangeRef.current.contains(e.target as Node)) {
+      setRangeOpen(false);
+    }
+  };
+  document.addEventListener('mousedown', close);
+  return () => document.removeEventListener('mousedown', close);
+}, [rangeOpen]);
   const fetchSalesData = async () => {
     try {
       setIsLoading(true);
-      setError('');
+      setToastExiting(false);
       const [salesRes, productRes, paymentRes] = await Promise.all([
         dailySalesAPI.getSales(dateFrom, dateTo),
         dailySalesAPI.getSalesByProduct(dateFrom, dateTo),
@@ -41,7 +87,9 @@ export default function DailySales() {
         byProduct: productRes.data.products || [],
         byPaymentMethod: paymentRes.data.methods || [],
       });
+      dismissToast();
     } catch (err: any) {
+      setToastExiting(false);
       setError('Failed to load sales data');
       console.error(err);
     } finally {
@@ -57,57 +105,67 @@ export default function DailySales() {
   );
 
   return (
+    <>
     <div className="page">
       <div className="page-head">
-        <div>
-          <p className="page-eyebrow">Reporting</p>
-          <h1 className="page-title">Daily sales</h1>
-          <p className="page-sub">Where the money came from, by service line and tender type.</p>
-        </div>
-        <button
-          type="button"
-          className={`btn btn-quiet btn-icon${isLoading ? ' is-busy' : ''}`}
-          onClick={fetchSalesData}
-          aria-label="Reload this range"
-        >
-          <IconRefresh />
-        </button>
-      </div>
+  <div className="page-head-intro">
+    <p className="page-eyebrow">Reporting</p>
+    <h1 className="page-title">Daily sales</h1>
+    <p className="page-sub">Where the money came from, by service line and tender type.</p>
+  </div>
 
-      {error && (
-        <div className="notice is-error" role="alert" style={{ marginBottom: 20 }}>
-          <IconAlert />
-          <span>{error}</span>
-        </div>
-      )}
-
-      <div className="range">
-        <div className="field">
-          <label className="field-label" htmlFor="date-from">
-            From
-          </label>
+  <div className="page-head-actions">
+  <div className="dash-date-range" ref={rangeRef}>
+    <button
+      type="button"
+      className="btn btn-quiet dash-date-trigger"
+      aria-expanded={rangeOpen}
+      aria-haspopup="dialog"
+      onClick={() => setRangeOpen((open) => !open)}
+    >
+      <IconClock size={16} />
+      <span>{rangeLabel}</span>
+      <span className="dash-date-chevron" aria-hidden="true">▾</span>
+    </button>
+    {rangeOpen && (
+      <div className="dash-date-panel" role="dialog" aria-label="Date range">
+        <label className="dash-date-field">
+          <span>From</span>
           <input
-            id="date-from"
             className="input"
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
           />
-        </div>
-        <div className="field">
-          <label className="field-label" htmlFor="date-to">
-            To
-          </label>
+        </label>
+        <label className="dash-date-field">
+          <span>To</span>
           <input
-            id="date-to"
             className="input"
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
           />
-        </div>
+        </label>
       </div>
+    )}
+  </div>
+  <button
+    type="button"
+    className={`btn btn-primary${isLoading ? ' is-busy' : ''}`}
+      onClick={fetchSalesData}
+      disabled={isLoading}
+      aria-label="Refresh sales data"
+    >
+      <IconRefresh size={16} />
+      Refresh
+    </button>
+  </div>
+</div>
 
+
+
+      
       {isLoading ? (
         <div className="sk-rows" style={{ marginTop: 28 }}>
           <div className="sk sk-line is-lg" style={{ width: '62%' }} />
@@ -235,6 +293,31 @@ export default function DailySales() {
           </>
         )
       )}
-    </div>
-  );
-}
+      </div>
+  
+      {error &&
+        createPortal(
+          <div
+            className={`dash-toast is-error${toastExiting ? ' is-exiting' : ''}`}
+            role="alert"
+            aria-live="polite"
+          >
+            <IconAlert size={16} />
+            <span className="dash-toast-text">
+              {isLoading ? 'Syncing…' : error}
+            </span>
+            {!isLoading && (
+              <button
+                type="button"
+                className="dash-toast-action"
+                onClick={fetchSalesData}
+              >
+                Try Again
+              </button>
+            )}
+          </div>,
+          document.body
+        )}
+      </>
+    );
+  }
