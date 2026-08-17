@@ -2,9 +2,21 @@
    INVENTORY — level bars read faster than a numbers column.
    ============================================================ */
 
-.section .segmented {
-  margin-bottom: var(--s-5);
-}
+   .section .segmented {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: var(--s-5);
+    padding: 4px;
+    gap: 2px;
+  }
+  
+  .section .segmented .segment {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: var(--s-2) var(--s-4);
+    transition: all 0.2s ease-in-out;
+  }
 
 .stock {
   display: grid;

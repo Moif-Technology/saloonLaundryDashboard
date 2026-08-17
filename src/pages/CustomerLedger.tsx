@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { customerAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
-import { IconAlert, IconCheck, IconInbox } from '../components/Icon';
+import { IconAlert, IconCheck, IconInbox, IconLedger, IconRefresh, IconVault } from '../components/Icon';
 import './CustomerLedger.css';
+import './Dashboard.css';
 
 interface UnpaidBill {
   billId: string;
@@ -27,30 +29,48 @@ export default function CustomerLedger() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'ledger' | 'unpaid'>('ledger');
+  const [toastExiting, setToastExiting] = useState(false);
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const dismissToast = () => {
+    if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+    setToastExiting(true);
+    dismissTimerRef.current = setTimeout(() => {
+      setError('');
+      setToastExiting(false);
+      dismissTimerRef.current = null;
+    }, 300);
+  };
 
   useEffect(() => {
     fetchCustomerData();
   }, []);
-
+useEffect(() => {
+  return () => {
+    if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+  };
+}, []);
   const fetchCustomerData = async () => {
     try {
       setIsLoading(true);
+      setToastExiting(false);
       setError('');
       const [ledgerRes, billsRes] = await Promise.all([
         customerAPI.getCustomerLedger(),
         customerAPI.getUnpaidBills(),
       ]);
-
       setLedger(ledgerRes.data.entries || []);
       setUnpaidBills(billsRes.data.bills || []);
+      dismissToast();
     } catch (err: any) {
+      setToastExiting(false);
       setError('Failed to load customer data');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   if (isLoading) {
     return (
       <div className="page">
@@ -83,21 +103,30 @@ export default function CustomerLedger() {
   const badlyOverdue = unpaidBills.filter((bill) => bill.daysOverdue > 30).length;
 
   return (
+    <>
     <div className="page">
-      <div className="page-head">
-        <div>
-          <p className="page-eyebrow">Receivables</p>
-          <h1 className="page-title">Customer ledger</h1>
-          <p className="page-sub">Credit given, credit collected, and what is still owed.</p>
-        </div>
-      </div>
+    <div className="page-head">
+  <div className="page-head-intro">
+    <p className="page-eyebrow">Receivables</p>
+    <h1 className="page-title">Customer ledger</h1>
+    <p className="page-sub">Credit given, credit collected, and what is still owed.</p>
+  </div>
 
-      {error && (
-        <div className="notice is-error" role="alert" style={{ marginBottom: 20 }}>
-          <IconAlert />
-          <span>{error}</span>
-        </div>
-      )}
+  <div className="page-head-actions">
+    <button
+      type="button"
+      className={`btn btn-primary${isLoading ? ' is-busy' : ''}`}
+      onClick={fetchCustomerData}
+      disabled={isLoading}
+      aria-label="Refresh customer ledger"
+    >
+      <IconRefresh size={16} />
+      Refresh
+    </button>
+  </div>
+</div>
+
+    
 
       {badlyOverdue > 0 && (
         <div className="notice is-warn" style={{ marginBottom: 20 }}>
@@ -109,26 +138,37 @@ export default function CustomerLedger() {
         </div>
       )}
 
-      <section className="stat-rail" aria-label="Receivables summary">
-        <div
-          className={`stat ${totalBalance > 0 ? 'is-pos' : totalBalance < 0 ? 'is-neg' : ''}`}
-          style={{ '--i': 0 } as React.CSSProperties}
-        >
-          <p className="stat-label">Net balance</p>
-          <p className="stat-value">{formatMoney(Math.abs(totalBalance))}</p>
-          <p className="stat-foot">{totalBalance >= 0 ? 'To collect' : 'To refund'}</p>
-        </div>
-        <div className="stat" style={{ '--i': 1 } as React.CSSProperties}>
-          <p className="stat-label">Open bills</p>
-          <p className="stat-value">{unpaidBills.length}</p>
-          <p className="stat-foot">{formatMoney(totalUnpaid)}</p>
-        </div>
-        <div className="stat" style={{ '--i': 2 } as React.CSSProperties}>
-          <p className="stat-label">On credit</p>
-          <p className="stat-value">{ledger.length}</p>
-          <p className="stat-foot">Customer accounts</p>
-        </div>
-      </section>
+<section className="dash-metrics" aria-label="Receivables summary">
+  <div
+    className="dash-metric-card stat"
+    style={{ '--i': 0 } as React.CSSProperties}
+  >
+    <span className="dash-metric-icon" aria-hidden="true">
+      <IconLedger size={16} />
+    </span>
+    <p className="stat-label">Net balance</p>
+    <p className={`stat-value${totalBalance > 0 ? ' is-pos' : totalBalance < 0 ? ' is-neg' : ''}`}>
+      {formatMoney(Math.abs(totalBalance))}
+    </p>
+    <p className="stat-foot">{totalBalance >= 0 ? 'To collect' : 'To refund'}</p>
+  </div>
+  <div className="dash-metric-card stat" style={{ '--i': 1 } as React.CSSProperties}>
+    <span className="dash-metric-icon" aria-hidden="true">
+      <IconVault size={16} />
+    </span>
+    <p className="stat-label">Open bills</p>
+    <p className="stat-value">{unpaidBills.length}</p>
+    <p className="stat-foot">{formatMoney(totalUnpaid)}</p>
+  </div>
+  <div className="dash-metric-card stat" style={{ '--i': 2 } as React.CSSProperties}>
+    <span className="dash-metric-icon" aria-hidden="true">
+      <IconInbox size={16} />
+    </span>
+    <p className="stat-label">On credit</p>
+    <p className="stat-value">{ledger.length}</p>
+    <p className="stat-foot">Customer accounts</p>
+  </div>
+</section>
 
       <section className="section">
         <div className="segmented" role="tablist" aria-label="Ledger views">
@@ -241,6 +281,34 @@ export default function CustomerLedger() {
             </>
           ))}
       </section>
-    </div>
-  );
+      </div>
+
+{error &&
+  createPortal(
+    <div
+      className={`dash-toast is-error${toastExiting ? ' is-exiting' : ''}`}
+      role="alert"
+      aria-live="polite"
+    >
+      <IconAlert size={16} />
+      <span className="dash-toast-text">
+        {isLoading ? 'Syncing…' : error}
+      </span>
+      {!isLoading && (
+        <button
+          type="button"
+          className="dash-toast-action"
+          onClick={fetchCustomerData}
+        >
+          Try Again
+        </button>
+      )}
+    </div>,
+    document.body
+  )}
+</>
+);
+   
+ 
+
 }

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { inventoryAPI } from '../lib/api';
-import { IconAlert, IconCheck, IconInbox } from '../components/Icon';
+import { IconAlert, IconCheck, IconInbox, IconRefresh } from '../components/Icon';
 import './Inventory.css';
-
+import './Dashboard.css';
 interface StockItem {
   itemId: string;
   name: string;
@@ -19,19 +20,36 @@ export default function Inventory() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'low' | 'critical'>('all');
-
+  const [toastExiting, setToastExiting] = useState(false);
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const dismissToast = () => {
+    if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+    setToastExiting(true);
+    dismissTimerRef.current = setTimeout(() => {
+      setError('');
+      setToastExiting(false);
+      dismissTimerRef.current = null;
+    }, 300);
+  };
   useEffect(() => {
     fetchInventory();
   }, []);
-
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+    };
+  }, []);
   const fetchInventory = async () => {
     try {
       setIsLoading(true);
-      setError('');
+      setToastExiting(false);
       const res = await inventoryAPI.getStockLevels();
       setItems(res.data.items || []);
+      dismissToast();
     } catch (err: any) {
-      setError('Failed to load inventory data');
+      setToastExiting(false);
+      setError('Unable to load inventory data');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -58,28 +76,35 @@ export default function Inventory() {
 
   if (isLoading) {
     return (
-      <div className="page">
-        <div className="sk-stack" style={{ maxWidth: 300 }}>
-          <div className="sk sk-line is-sm" style={{ width: '36%' }} />
-          <div className="sk sk-line is-lg" style={{ width: '70%' }} />
+      <>
+        <div className="page">
+          ...
         </div>
-        <div className="stat-rail" style={{ marginTop: 28 }}>
-          {[0, 1, 2].map((key) => (
-            <div className="stat" key={key}>
-              <div className="sk sk-line is-sm" style={{ width: '60%' }} />
-              <div className="sk sk-line" style={{ marginTop: 12, width: '46%', height: 20 }} />
-            </div>
-          ))}
-        </div>
-        <div className="sk-rows">
-          {[0, 1, 2, 3, 4].map((key) => (
-            <div className="sk-row" key={key}>
-              <div className="sk sk-line" style={{ width: '52%' }} />
-              <div className="sk sk-line is-sm" />
-            </div>
-          ))}
-        </div>
-      </div>
+  
+        {error &&
+          createPortal(
+            <div
+              className={`dash-toast is-error${toastExiting ? ' is-exiting' : ''}`}
+              role="alert"
+              aria-live="polite"
+            >
+              <IconAlert size={16} />
+              <span className="dash-toast-text">
+                {isLoading ? 'Syncing…' : error}
+              </span>
+              {!isLoading && (
+                <button
+                  type="button"
+                  className="dash-toast-action"
+                  onClick={fetchInventory}
+                >
+                  Try Again
+                </button>
+              )}
+            </div>,
+            document.body
+          )}
+      </>
     );
   }
 
@@ -94,21 +119,29 @@ export default function Inventory() {
   ];
 
   return (
+    <>
     <div className="page">
       <div className="page-head">
-        <div>
-          <p className="page-eyebrow">Stock room</p>
-          <h1 className="page-title">Inventory</h1>
-          <p className="page-sub">Levels against reorder points, worst offenders first.</p>
-        </div>
-      </div>
+  <div className="page-head-intro">
+    <p className="page-eyebrow">Stock room</p>
+    <h1 className="page-title">Inventory</h1>
+    <p className="page-sub">Levels against reorder points, worst offenders first.</p>
+  </div>
 
-      {error && (
-        <div className="notice is-error" role="alert" style={{ marginBottom: 20 }}>
-          <IconAlert />
-          <span>{error}</span>
-        </div>
-      )}
+  <div className="page-head-actions">
+    <button
+      type="button"
+      className={`btn btn-primary${isLoading ? ' is-busy' : ''}`}
+      onClick={fetchInventory}
+      disabled={isLoading}
+      aria-label="Refresh inventory"
+    >
+      <IconRefresh size={16} />
+      Refresh
+    </button>
+  </div>
+</div>
+
 
       {criticalCount > 0 && (
         <div className="notice is-warn" style={{ marginBottom: 20 }}>
@@ -120,26 +153,35 @@ export default function Inventory() {
         </div>
       )}
 
-      <section className="stat-rail" aria-label="Stock summary">
-        <div className="stat" style={{ '--i': 0 } as React.CSSProperties}>
-          <p className="stat-label">Tracked</p>
-          <p className="stat-value">{items.length}</p>
-          <p className="stat-foot">Items on file</p>
-        </div>
-        <div className="stat is-pos" style={{ '--i': 1 } as React.CSSProperties}>
-          <p className="stat-label">Healthy</p>
-          <p className="stat-value">{okCount}</p>
-          <p className="stat-foot">Above reorder</p>
-        </div>
-        <div
-          className={`stat${lowStockCount > 0 ? ' is-warn' : ''}`}
-          style={{ '--i': 2 } as React.CSSProperties}
-        >
-          <p className="stat-label">Needs order</p>
-          <p className="stat-value">{lowStockCount}</p>
-          <p className="stat-foot">Low or critical</p>
-        </div>
-      </section>
+<section className="dash-metrics" aria-label="Stock summary">
+  <div className="dash-metric-card stat" style={{ '--i': 0 } as React.CSSProperties}>
+    <span className="dash-metric-icon" aria-hidden="true">
+      <IconInbox size={16} />
+    </span>
+    <p className="stat-label">Tracked</p>
+    <p className="stat-value">{items.length}</p>
+    <p className="stat-foot">Items on file</p>
+  </div>
+  <div className="dash-metric-card stat" style={{ '--i': 1 } as React.CSSProperties}>
+    <span className="dash-metric-icon" aria-hidden="true">
+      <IconCheck size={16} />
+    </span>
+    <p className="stat-label">Healthy</p>
+    <p className="stat-value">{okCount}</p>
+    <p className="stat-foot">Above reorder</p>
+  </div>
+  <div
+    className={`dash-metric-card stat${lowStockCount > 0 ? ' is-warn' : ''}`}
+    style={{ '--i': 2 } as React.CSSProperties}
+  >
+    <span className="dash-metric-icon" aria-hidden="true">
+      <IconAlert size={16} />
+    </span>
+    <p className="stat-label">Needs order</p>
+    <p className="stat-value">{lowStockCount}</p>
+    <p className="stat-foot">Low or critical</p>
+  </div>
+</section>
 
       <section className="section">
         <div className="section-head">
@@ -226,7 +268,32 @@ export default function Inventory() {
             })}
           </ul>
         )}
-      </section>
+            </section>
     </div>
+
+    {error &&
+      createPortal(
+        <div
+          className={`dash-toast is-error${toastExiting ? ' is-exiting' : ''}`}
+          role="alert"
+          aria-live="polite"
+        >
+          <IconAlert size={16} />
+          <span className="dash-toast-text">
+            {isLoading ? 'Syncing…' : error}
+          </span>
+          {!isLoading && (
+            <button
+              type="button"
+              className="dash-toast-action"
+              onClick={fetchInventory}
+            >
+              Try Again
+            </button>
+          )}
+        </div>,
+        document.body
+      )}
+  </>
   );
 }
