@@ -21,6 +21,13 @@ function App() {
     setIsLoading(false);
   }, []);
 
+  /* api.ts fires this when the refresh token is gone or rejected. */
+  useEffect(() => {
+    const onExpired = () => setIsAuthenticated(false);
+    window.addEventListener('auth:expired', onExpired);
+    return () => window.removeEventListener('auth:expired', onExpired);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="boot">

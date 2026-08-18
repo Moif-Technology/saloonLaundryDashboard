@@ -3,6 +3,7 @@ import { customerAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
 import { IconAlert, IconCheck, IconInbox } from '../components/Icon';
 import './CustomerLedger.css';
+import { useRefreshHandler } from '../lib/pullToRefresh';
 
 interface UnpaidBill {
   billId: string;
@@ -50,6 +51,8 @@ export default function CustomerLedger() {
       setIsLoading(false);
     }
   };
+
+  useRefreshHandler(fetchCustomerData);
 
   if (isLoading) {
     return (

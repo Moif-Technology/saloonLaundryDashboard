@@ -4,6 +4,7 @@ import { counterHistoryAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
 import { IconAlert, IconArrow, IconInbox } from '../components/Icon';
 import './CounterHistory.css';
+import { useRefreshHandler } from '../lib/pullToRefresh';
 
 interface StaffSale {
   staffId: number | null;
@@ -78,6 +79,8 @@ export default function CounterCloseDetail() {
       setIsLoading(false);
     }
   };
+
+  useRefreshHandler(fetchDetail);
 
   if (isLoading) {
     return (

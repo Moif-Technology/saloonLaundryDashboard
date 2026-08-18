@@ -113,6 +113,60 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/**
+ * Access tokens live 2h, refresh tokens 7d. On a 401 we trade the refresh
+ * token for a fresh access token and replay the request once, so a session
+ * only ends when the refresh token itself is dead.
+ */
+let refreshInFlight: Promise<string> | null = null;
+
+const requestNewAccessToken = async () => {
+  const refreshToken = localStorage.getItem('auth_refresh');
+  if (!refreshToken) throw new Error('No refresh token stored');
+  // Bare axios on purpose: `api` would re-enter this interceptor on failure.
+  const { data } = await axios.post(
+    `${API_BASE}/api/auth/refresh`,
+    { refreshToken },
+    { timeout: 10000 }
+  );
+  const accessToken = data?.accessToken || data?.token;
+  if (!accessToken) throw new Error('Refresh returned no access token');
+  localStorage.setItem('auth_token', accessToken);
+  return accessToken as string;
+};
+
+if (!USE_MOCK_DATA) {
+  api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const original = error.config;
+      const isAuthCall = String(original?.url || '').includes('/auth/');
+      if (error.response?.status !== 401 || isAuthCall || !original || original._retried) {
+        return Promise.reject(error);
+      }
+
+      original._retried = true;
+      try {
+        // Single-flight: the dashboard fires three calls at once on load.
+        refreshInFlight =
+          refreshInFlight ||
+          requestNewAccessToken().finally(() => {
+            refreshInFlight = null;
+          });
+        const accessToken = await refreshInFlight;
+        original.headers = { ...original.headers, Authorization: `Bearer ${accessToken}` };
+        return api(original);
+      } catch {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        localStorage.removeItem('auth_refresh');
+        window.dispatchEvent(new Event('auth:expired'));
+        return Promise.reject(error);
+      }
+    }
+  );
+}
+
 // Mock interceptor - intercepts requests and returns mock data
 if (USE_MOCK_DATA) {
   api.interceptors.response.use(

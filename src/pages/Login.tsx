@@ -23,8 +23,8 @@ export default function Login({ setIsAuthenticated }: LoginProps) {
 
     try {
       const response = await authAPI.login(email, password);
-      const { token, user } = response.data;
-      authAPI.setAuth(token, user);
+      const { token, user, refreshToken } = response.data;
+      authAPI.setAuth(token, user, refreshToken);
       setIsAuthenticated(true);
       navigate('/');
     } catch (err: any) {

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { authAPI } from '../lib/auth';
+import { PullToRefresh, REFRESH_BUSY_EVENT, REFRESH_EVENT } from '../lib/pullToRefresh';
 import {
   IconGauge,
   IconGrid,
   IconLedger,
+  IconRefresh,
   IconSignOut,
   IconStaff,
   IconStock,
@@ -52,6 +54,7 @@ export default function Layout({ setIsAuthenticated }: LayoutProps) {
   const user = authAPI.getCurrentUser();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  const [refreshBusy, setRefreshBusy] = useState(false);
 
   /**
    * Clearing the token is not enough — App gates every route on its
@@ -73,7 +76,15 @@ export default function Layout({ setIsAuthenticated }: LayoutProps) {
 
   useEffect(() => {
     setSheetOpen(false);
+    setRefreshBusy(false);
   }, [location.pathname]);
+
+  /* The active page owns the fetch; it reports back through this event. */
+  useEffect(() => {
+    const onBusy = (e: Event) => setRefreshBusy(Boolean((e as CustomEvent).detail));
+    window.addEventListener(REFRESH_BUSY_EVENT, onBusy);
+    return () => window.removeEventListener(REFRESH_BUSY_EVENT, onBusy);
+  }, []);
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -101,8 +112,23 @@ export default function Layout({ setIsAuthenticated }: LayoutProps) {
       minute: '2-digit',
     }),
   ].join(' · ');
+
+  const refreshButton = (
+    <button
+      type="button"
+      className={`btn btn-quiet btn-icon${refreshBusy ? ' is-busy' : ''}`}
+      onClick={() => window.dispatchEvent(new Event(REFRESH_EVENT))}
+      disabled={refreshBusy}
+      aria-label="Refresh this page"
+      title="Refresh"
+    >
+      <IconRefresh size={18} />
+    </button>
+  );
+
   return (
     <div className="shell">
+      <PullToRefresh busy={refreshBusy} />
       <aside className="rail">
       <div className="rail-brand">
   <span className="brand-mark">CL</span>
@@ -110,6 +136,8 @@ export default function Layout({ setIsAuthenticated }: LayoutProps) {
     <strong>Counterline</strong>
     <em>Salon &amp; Laundry</em>
   </span>
+  {/* The appbar is hidden from 1024px up, so the rail carries the button there. */}
+  <span className="rail-brand-action">{refreshButton}</span>
 </div>
 
         <nav className="rail-nav" aria-label="Sections">
@@ -155,6 +183,8 @@ export default function Layout({ setIsAuthenticated }: LayoutProps) {
     </span>
   </div>
 
+  <div className="appbar-actions">
+  {refreshButton}
   <button
   type="button"
   className="avatar-btn"
@@ -163,6 +193,7 @@ export default function Layout({ setIsAuthenticated }: LayoutProps) {
 >
   {initialsOf(user?.name)}
 </button>
+</div>
 </header>
 
       <main className="canvas">

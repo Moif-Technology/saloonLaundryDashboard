@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { inventoryAPI } from '../lib/api';
 import { IconAlert, IconCheck, IconInbox } from '../components/Icon';
 import './Inventory.css';
+import { useRefreshHandler } from '../lib/pullToRefresh';
 
 interface StockItem {
   itemId: string;
@@ -37,6 +38,8 @@ export default function Inventory() {
       setIsLoading(false);
     }
   };
+
+  useRefreshHandler(fetchInventory);
 
   const getStatusColor = (status: string) => {
     switch (status) {

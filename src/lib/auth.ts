@@ -55,6 +55,7 @@ export const authAPI = {
   logout: () => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_refresh');
   },
 
   getCurrentUser: (): AuthUser | null => {
@@ -62,9 +63,15 @@ export const authAPI = {
     return user ? JSON.parse(user) : null;
   },
 
-  setAuth: (token: string, user: AuthUser) => {
+  /**
+   * The access token expires in 2h. Without the refresh token stored here the
+   * app has no way back and the user has to sign in again — see the 401
+   * interceptor in api.ts.
+   */
+  setAuth: (token: string, user: AuthUser, refreshToken?: string) => {
     localStorage.setItem('auth_token', token);
     localStorage.setItem('auth_user', JSON.stringify(user));
+    if (refreshToken) localStorage.setItem('auth_refresh', refreshToken);
   },
 
   isAuthenticated: () => {

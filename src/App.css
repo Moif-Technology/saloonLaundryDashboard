@@ -283,6 +283,28 @@
   }
 }
 
+/* Pull-to-refresh badge — rides down with the gesture, spins while fetching. */
+.ptr {
+  position: fixed;
+  top: calc(var(--header-h) + var(--safe-t));
+  left: 50%;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: 0 6px 16px rgba(31, 17, 20, 0.12);
+  color: var(--accent);
+  pointer-events: none;
+}
+
+.ptr.is-busy svg {
+  animation: spin 900ms linear infinite;
+}
+
 /* Icon buttons in a header sit flush and compact. */
 .btn-sm {
   min-height: 38px;

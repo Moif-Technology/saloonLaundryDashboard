@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { staffAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
-import { IconAlert, IconInbox, IconRefresh, IconStar } from '../components/Icon';
+import { IconAlert, IconInbox, IconStar } from '../components/Icon';
 import './StaffPerformance.css';
+import { useRefreshHandler } from '../lib/pullToRefresh';
 
 interface StaffData {
   staffId: string;
@@ -40,6 +41,8 @@ export default function StaffPerformance() {
     }
   };
 
+  useRefreshHandler(fetchStaffData);
+
   /* Display-only: bar length is relative to the strongest performer. */
   const top = Math.max(1, ...staff.map((member) => member.totalRevenue || 0));
 
@@ -51,14 +54,6 @@ export default function StaffPerformance() {
           <h1 className="page-title">Staff performance</h1>
           <p className="page-sub">Revenue, ticket count and tips per staff member for the range.</p>
         </div>
-        <button
-          type="button"
-          className="btn btn-quiet btn-icon"
-          onClick={fetchStaffData}
-          aria-label="Reload this range"
-        >
-          <IconRefresh />
-        </button>
       </div>
 
       {error && (

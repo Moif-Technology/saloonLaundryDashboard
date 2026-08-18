@@ -54,6 +54,17 @@
   border-bottom: 1px solid var(--line);
 }
 
+.appbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* Only the rail shows this copy — the appbar has its own at 1023px and below. */
+.rail-brand-action {
+  display: none;
+}
+
 .appbar-lead {
   display: flex;
   align-items: center;
@@ -347,6 +358,11 @@
     align-items: center;
     gap: var(--s-3);
     min-width: 0;
+  }
+
+  .rail-brand-action {
+    display: block;
+    margin-left: auto;
   }
 
   .brand-text {

@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { counterHistoryAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
-import { IconArrow, IconClock, IconInbox, IconRefresh } from '../components/Icon';
+import { IconArrow, IconClock, IconInbox } from '../components/Icon';
 import './CounterHistory.css';
 import './Dashboard.css';
+import { useRefreshHandler } from '../lib/pullToRefresh';
 
 interface CloseRow {
   closeId: number;
@@ -62,7 +63,7 @@ const timeOf = (value: string) =>
 export default function CounterHistory() {
   const [closes, setCloses] = useState<CloseRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [, setError] = useState('');
   const [dateFrom, setDateFrom] = useState(daysAgo(6));
 const [dateTo, setDateTo] = useState(isoDay(new Date()));
 const [rangeOpen, setRangeOpen] = useState(false);
@@ -113,6 +114,8 @@ useEffect(() => {
       setIsLoading(false);
     }
   };
+
+  useRefreshHandler(fetchHistory);
 
   const grouped = groupByDay(closes);
   const totalGross = closes.reduce((sum, row) => sum + row.grossAmount, 0);
@@ -166,17 +169,6 @@ useEffect(() => {
         </div>
       )}
     </div>
-
-    <button
-      type="button"
-      className={`btn btn-primary${isLoading ? ' is-busy' : ''}`}
-      onClick={fetchHistory}
-      disabled={isLoading}
-      aria-label="Reload counter close history"
-    >
-      <IconRefresh size={16} />
-      Refresh
-    </button>
   </div>
 </div>
 

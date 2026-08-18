@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { counterCloseAPI, dailySalesAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
+import { useRefreshHandler } from '../lib/pullToRefresh';
 
 import {
   IconAlert,
@@ -10,7 +11,6 @@ import {
   IconLedger,
   IconStaff,
   IconClock,
-  IconRefresh,
   IconStock,
   IconTrend,
   IconVault,
@@ -124,6 +124,8 @@ const rangeLabel =
       setInitialLoadDone(true);
     }
   };
+  useRefreshHandler(fetchDashboardData);
+
   useEffect(() => {
     if (!rangeOpen) return;
     const close = (e: MouseEvent) => {
@@ -216,19 +218,6 @@ const isEmptyToday =
     </div>
    )}
    </div>
-   <Link to="/daily-sales" className="btn btn-primary">
-  + New Sale
-</Link>
-<button
-  type="button"
-  className={`btn btn-primary${isLoading ? ' is-busy' : ''}`}
-  onClick={fetchDashboardData}
-  disabled={isLoading}
-  aria-label="Refresh dashboard"
->
-  <IconRefresh size={16} />
-  Refresh
-</button>
    </div>
 </div>
 
@@ -266,15 +255,6 @@ const isEmptyToday =
             ? `${stats.pendingBills} credit bill${stats.pendingBills === 1 ? '' : 's'} open`
             : 'No credit bills open'}
         </p>
-        {isEmptyToday && (
-          <Link
-            to="/daily-sales"
-            className="btn btn-primary"
-            style={{ marginTop: 16, display: 'inline-flex' }}
-          >
-            New Sale
-          </Link>
-              )}
               </div>
             </div>
           </div>

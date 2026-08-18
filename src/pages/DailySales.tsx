@@ -3,9 +3,10 @@ import { createPortal } from 'react-dom';
 
 import { dailySalesAPI } from '../lib/api';
 import { formatMoney } from '../lib/format';
-import { IconAlert, IconClock, IconInbox, IconRefresh } from '../components/Icon';
+import { IconAlert, IconClock, IconInbox } from '../components/Icon';
 import './DailySales.css';
 import './Dashboard.css';
+import { useRefreshHandler } from '../lib/pullToRefresh';
 
 interface SalesData {
   totalRevenue: number;
@@ -97,6 +98,8 @@ useEffect(() => {
     }
   };
 
+  useRefreshHandler(fetchSalesData);
+
   /* Display-only ratios for the share meters. */
   const topProduct = Math.max(1, ...(salesData?.byProduct.map((item) => item.revenue) ?? [0]));
   const paymentTotal = Math.max(
@@ -150,16 +153,6 @@ useEffect(() => {
       </div>
     )}
   </div>
-  <button
-    type="button"
-    className={`btn btn-primary${isLoading ? ' is-busy' : ''}`}
-      onClick={fetchSalesData}
-      disabled={isLoading}
-      aria-label="Refresh sales data"
-    >
-      <IconRefresh size={16} />
-      Refresh
-    </button>
   </div>
 </div>
 
