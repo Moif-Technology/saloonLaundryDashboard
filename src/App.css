@@ -7,9 +7,8 @@
 /* ---------- Page frame ---------- */
 
 .page {
-  padding: var(--s-5) var(--gutter) var(--s-8);
-  max-width: 1240px;
-  margin-inline: auto;
+  padding: var(--s-5) clamp(1.5rem, 4vw, 2.5rem) var(--s-8);
+  /* max-width removed */
   animation: page-in var(--dur-3) var(--ease) both;
 }
 

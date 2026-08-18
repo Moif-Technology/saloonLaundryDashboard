@@ -37,7 +37,10 @@ const SHORTCUTS = [
   { to: '/staff-performance', label: 'Staff performance', note: 'Tickets and revenue by person', icon: IconStaff },
   { to: '/customer-ledger', label: 'Collect credit bills', note: 'Outstanding customer balances', icon: IconLedger },
 ];
-
+const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+const MONTHS = Array.from({ length: 12 }, (_, m) =>
+  new Date(2000, m, 1).toLocaleDateString('en-AE', { month: 'short' })
+);
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     todayRevenue: 0,
@@ -65,10 +68,80 @@ const dismissToast = () => {
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [rangeOpen, setRangeOpen] = useState(false);
-const rangeRef = useRef<HTMLDivElement>(null);
+  const rangeRef = useRef<HTMLDivElement>(null);
+const toISO = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+const fromDate = new Date(`${dateFrom}T12:00:00`);
+const [viewYear, setViewYear] = useState(fromDate.getFullYear());
+const [viewMonth, setViewMonth] = useState(fromDate.getMonth());
+const [rangeAnchor, setRangeAnchor] = useState<string | null>(null);
+const [calView, setCalView] = useState<'days' | 'months' | 'years'>('days');
+
+const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-AE', {
+  month: 'long',
+  year: 'numeric',
+});
+
+
+const shiftMonth = (delta: number) => {
+  const next = new Date(viewYear, viewMonth + delta, 1);
+  setViewYear(next.getFullYear());
+  setViewMonth(next.getMonth());
+};
+
+const firstWeekday = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7;
+const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+const calendarCells: (number | null)[] = [
+  ...Array(firstWeekday).fill(null),
+  ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+];
+
+const pickDay = (day: number) => {
+  const iso = toISO(new Date(viewYear, viewMonth, day));
+  if (rangeAnchor == null) {
+    setDateFrom(iso);
+    setDateTo(iso);
+    setRangeAnchor(iso);
+    return;
+  }
+  if (iso < rangeAnchor) {
+    setDateFrom(iso);
+    setDateTo(rangeAnchor);
+  } else {
+    setDateFrom(rangeAnchor);
+    setDateTo(iso);
+  }
+  setRangeAnchor(null);
+};
+
+const pickMonth = (m: number) => {
+  setViewMonth(m);
+  setCalView('days');
+};
+const goToday = () => {
+  const now = new Date();
+  setViewYear(now.getFullYear());
+  setViewMonth(now.getMonth());
+  setDateFrom(today);
+  setDateTo(today);
+  setRangeAnchor(null);
+};
+
+const clearRange = () => {
+  setDateFrom(today);
+  setDateTo(today);
+  setRangeAnchor(null);
+  setRangeOpen(false);
+};
 
 const formatDashDate = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString('en-AE', {
+
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -126,6 +199,8 @@ const rangeLabel =
   };
   useEffect(() => {
     if (!rangeOpen) return;
+    setRangeAnchor(null);
+    setCalView('days');
     const close = (e: MouseEvent) => {
       if (rangeRef.current && !rangeRef.current.contains(e.target as Node)) {
         setRangeOpen(false);
@@ -182,39 +257,86 @@ const isEmptyToday =
 
 <div className="page-head-actions">
 <div className="dash-date-range" ref={rangeRef}>
-  <button
-    type="button"
-    className="btn btn-quiet dash-date-trigger"
-    aria-expanded={rangeOpen}
-    aria-haspopup="dialog"
-    onClick={() => setRangeOpen((open) => !open)}
-  >
-    <IconClock size={16} />
-    <span>{rangeLabel}</span>
-    <span className="dash-date-chevron" aria-hidden="true">▾</span>
-  </button>
+<button
+  type="button"
+  className="btn btn-quiet dash-date-trigger"
+  aria-expanded={rangeOpen}
+  aria-haspopup="dialog"
+  onClick={() => setRangeOpen((open) => !open)}
+>
+  <IconClock size={16} />
+  <span>{rangeLabel}</span>
+  <span className="dash-date-chevron" aria-hidden="true">▾</span>
+</button>
   {rangeOpen && (
-    <div className="dash-date-panel" role="dialog" aria-label="Date range">
-      <label className="dash-date-field">
-        <span>From</span>
-        <input
-          className="input"
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-        />
-      </label>
-      <label className="dash-date-field">
-        <span>To</span>
-        <input
-          className="input"
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-        />
-      </label>
+  <div className="dash-date-panel" role="dialog" aria-label="Date range">
+<div className="dash-cal-head">
+<button
+  type="button"
+  className="dash-cal-month"
+  onClick={() =>
+    setCalView((v) => (v === 'days' ? 'months' : v === 'months' ? 'years' : 'days'))
+  }
+>
+  {calView === 'days' ? monthLabel : viewYear}
+</button>
+
+  <div className="dash-cal-nav">
+        <button type="button" className="dash-cal-nav-btn" aria-label="Previous month" onClick={() => shiftMonth(-1)}>‹</button>
+        <button type="button" className="dash-cal-nav-btn" aria-label="Next month" onClick={() => shiftMonth(1)}>›</button>
+      </div>
     </div>
-   )}
+    {calView === 'days' && (
+  <>
+<div className="dash-cal-weekdays">
+  {WEEKDAYS.map((d) => (
+    <span key={d}>{d}</span>
+  ))}
+</div>
+<div className="dash-cal-grid">
+  {calendarCells.map((day, i) =>
+        day == null ? (
+          <span key={`e-${i}`} className="dash-cal-day is-empty" />
+        ) : (
+          <button
+            key={day}
+            type="button"
+            className={`dash-cal-day${
+              toISO(new Date(viewYear, viewMonth, day)) >= dateFrom &&
+              toISO(new Date(viewYear, viewMonth, day)) <= dateTo
+                ? ' is-selected'
+                : ''
+            }${toISO(new Date(viewYear, viewMonth, day)) === today ? ' is-today' : ''}`}
+            onClick={() => pickDay(day)}
+          >
+            {day}
+          </button>
+        )
+      )}
+      </div>
+        </>
+      )}
+      {calView === 'months' && (
+        <div className="dash-cal-months">
+          {MONTHS.map((label, m) => (
+            <button
+              key={label}
+              type="button"
+              className={`dash-cal-pick${m === viewMonth ? ' is-selected' : ''}`}
+              onClick={() => pickMonth(m)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="dash-cal-foot">
+      <button type="button" className="dash-cal-foot-btn" onClick={goToday}>Today</button>
+      <button type="button" className="dash-cal-foot-btn" onClick={clearRange}>Clear</button>
+    </div>
+  </div>
+)}
    </div>
    <Link to="/daily-sales" className="btn btn-primary">
   + New Sale
